@@ -52,8 +52,7 @@
  * <p>
  * <ul>
  * <li><a href="https://tools.ietf.org/html/rfc3986">RFC 3986 "Uniform Resource Identifier (URI): Generic Syntax"</a></li>
- * <li><a href="https://tools.ietf.org/html/rfc3986">RFC 3987 "Internationalized Resource Identifiers (IRIs)"</a></li>
- * <li><a href="https://tools.ietf.org/html/rfc3986">RFC 3987 "Internationalized Resource Identifiers (IRIs)"</a></li>
+ * <li><a href="https://tools.ietf.org/html/rfc3987">RFC 3987 "Internationalized Resource Identifiers (IRIs)"</a></li>
  * <li><a href="https://tools.ietf.org/html/rfc8141">RFC 8141 Uniform Resource Names (URNs) [scheme specific details]</a></li>
  * <li><a href="https://tools.ietf.org/html/rfc7230">RFC 7230 HTTP 1.1 [scheme specific details]</a>
  * </ul>
