@@ -22,7 +22,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.seaborne</groupId>
-  <artifactId>rfc3986</artifactId>
+  <artifactId>iri4ld</artifactId>
   <version>0.0.0-SNAPSHOT</version>
 
   <name>rfc3986</name>
@@ -119,6 +119,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
+	  <encoding>UTF-8</encoding>
           <release>11</release>
         </configuration>
       </plugin>
