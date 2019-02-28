@@ -107,7 +107,7 @@ public class IRI3986 {
     public static void check(String iristr) {
         check(iristr, false);
     }
-    
+
     /**
      * Determine if the string conforms to the IRI syntax. If not, it throws an exception.
      * This operation optionally also applies some scheme specific rules.
@@ -118,7 +118,7 @@ public class IRI3986 {
             iri.checkSchemeSpecificRules();
     }
 
-    /** 
+    /**
      * Determine if the string conforms to the IRI syntax.
      * If not, it throws an exception
      */
@@ -126,16 +126,16 @@ public class IRI3986 {
         IRI3986 iri = new IRI3986(iristr).process();
         return iri;
     }
-    
+
     private final String iriStr;
     private final int length;
 
     private static ErrorHandler errorHandler = s-> { throw new IRIParseException(s);};
-    
+
     public static void setErrorHandler(ErrorHandler errHandler) {
         errorHandler = errHandler;
     }
-    
+
     // Offsets of parsed components, together with cached value.
     // The value is not calculated until first used, making pure checking
     // not need to create any extra objects.
@@ -192,7 +192,7 @@ public class IRI3986 {
             // relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
             x = withoutScheme(0);
         }
-    
+
         // Did the process consume the whole string?
         if ( x != length ) {
             String label;
@@ -252,6 +252,8 @@ public class IRI3986 {
     public String getPath() {
         if ( hasPath() && path == null)
             path = part(iriStr, path0, path1);
+        if ( path == null )
+            return "";
         return path;
     }
 
@@ -284,7 +286,7 @@ public class IRI3986 {
     }
 
 //    public boolean isHierarchical() {
-//        ????    
+//        ????
 //        return false;
 //    }
 
@@ -292,9 +294,9 @@ public class IRI3986 {
     private static char[] HTTPSchars = { 'h','t','t','p','s',':' };
     private static char[] URNchars =  { 'u','r','n',':' };
     private static char[] FILEchars = { 'f','i','l','e',':' };
-    
-    private boolean isScheme(char[] schemeChars) { return containsAtIgnoreCase(iriStr, 0, schemeChars); } 
-    
+
+    private boolean isScheme(char[] schemeChars) { return containsAtIgnoreCase(iriStr, 0, schemeChars); }
+
     /** Apply scheme specific rules */
     public IRI3986 checkSchemeSpecificRules() {
         // No internal objects created.
@@ -320,10 +322,10 @@ public class IRI3986 {
         }
         return this;
     }
-    
+
     // The encoding work.
     private IRI3986 encode() {
-        StringBuilder sb = new StringBuilder(iriStr.length()+20); 
+        StringBuilder sb = new StringBuilder(iriStr.length()+20);
         for ( int i = 0 ; i < iriStr.length(); i++ ) {
             char ch = iriStr.charAt(i);
             if ( ch <= 0x7F)
@@ -339,11 +341,11 @@ public class IRI3986 {
     public IRI3986 normalize() {
         String scheme = getScheme();
         String authority = getAuthority();
-        String path = getPath();    
+        String path = getPath();
         String query = getQuery();
         String fragment = getFragment();
 
-        
+
 //        6.2.2.  Syntax-Based Normalization
 //
 //        Implementations may use logic based on the definitions provided by
@@ -362,14 +364,14 @@ public class IRI3986 {
 //        dot-segments.
 //
 //     6.2.2.1.  Case Normalization
-        
+
         if ( scheme != null )
             scheme = scheme.toLowerCase(Locale.ROOT);
         if ( authority != null )
             authority = authority.toLowerCase(Locale.ROOT);
 
         // percent encoding - to upper case.
-        
+
 //     6.2.2.2.  Percent-Encoding Normalization
 //
 //        The percent-encoding mechanism (Section 2.1) is a frequent source of
@@ -379,22 +381,24 @@ public class IRI3986 {
 //        are equivalent to their non-encoded counterparts.  These URIs should
 //        be normalized by decoding any percent-encoded octet that corresponds
 //        to an unreserved character, as described in Section 2.3.
-        
+
         // percent encoding - to unreserved
 
 //     6.2.2.3.  Path Segment Normalization
-        
+
         if ( path != null )
             path = remove_dot_segments(path);
+        if ( path == null || path.isEmpty() )
+            path = "/";
 
 //     6.2.3.  Scheme-Based Normalization
-        
+
         // HTTP and :80.
         // HTTPS and :443
-        
+
         if ( authority != null && authority.endsWith(":") )
             authority = authority.substring(0, authority.length()-1);
-        
+
         if ( Objects.equals("http", scheme) ) {
             if ( authority != null && authority.endsWith(":80") )
                 authority = authority.substring(0, authority.length()-3);
@@ -406,7 +410,7 @@ public class IRI3986 {
 //     6.2.4.  Protocol-Based Normalization
         // None.
 
-        String s = rebuild(scheme, authority, path, query, fragment); 
+        String s = rebuild(scheme, authority, path, query, fragment);
         return new IRI3986(s);
     }
 
@@ -415,7 +419,7 @@ public class IRI3986 {
         // Base must have scheme. Be lax.
         return transformReferences(this, baseIRI);
     }
-    
+
     // Make absolute = resolve(Base)
 
     /** 5.2.2.  Transform References */
@@ -425,7 +429,7 @@ public class IRI3986 {
         String t_path = "";
         String t_query = null;
         String t_fragment = null;
-        
+
 //        -- The URI reference is parsed into the five URI components
 //        --
 //        (R.scheme, R.authority, R.path, R.query, R.fragment) = parse(R);
@@ -499,7 +503,7 @@ public class IRI3986 {
                 }
                 t_authority = base.getAuthority();
             }
-            t_scheme = base.getScheme(); 
+            t_scheme = base.getScheme();
         }
         t_fragment = reference.getFragment();
         return RFC3986.create()
@@ -513,7 +517,7 @@ public class IRI3986 {
      o  If the base URI has a defined authority component and an empty
         path, then return a string consisting of "/" concatenated with the
         reference's path; otherwise,
-        
+
      o  return a string consisting of the reference's path component
         appended to all but the last segment of the base URI's path (i.e.,
         excluding any characters after the right-most "/" in the base URI
@@ -535,38 +539,38 @@ public class IRI3986 {
     /** 5.2.4.  Remove Dot Segments */
     private static String remove_dot_segments(String path) {
         String s1 = remove_dot_segments$(path);
-        if ( true ) {
-            String s2 = removeDotSegments(path);
+        if ( false ) {
+            String s2 = jenaIRIremoveDotSegments(path);
             if ( ! Objects.equals(s1, s2) )
-                System.err.printf("remove_dot_segments : %s %s\n", s1, s2); 
+                System.err.printf("remove_dot_segments : %s %s\n", s1, s2);
         }
         return s1;
     }
-    
+
     /* Implement using segments. -- * 5.2.4.  Remove Dot Segments */
     private static String remove_dot_segments$(String path) {
-        if ( path.isEmpty() )
-            // Strictly, unnecessary.
+        if ( path == null || path.isEmpty() )
             return "";
-       
+        if ( path.equals("/") )
+            return "/";
         String[] segments = path.split("/");
 //        if ( segments.length == 0 )
-//            // Can't happen. Even "" splits to [""]
+//            // Path is "/" - already done.
 //            return "/";
-        
+
         int N = segments.length;
         boolean initialSlash = segments[0].isEmpty();
         boolean trailingSlash = false;
         // Trailing slash if it isn't the initial "/" and it ends in "/" or "/." or "/.."
         if ( N > 1 ) {
-            if ( segments[N-1].equals(".") || segments[N-1].equals("..") )  
+            if ( segments[N-1].equals(".") || segments[N-1].equals("..") )
                 trailingSlash = true;
             else if ( path.charAt(path.length()-1) == '/' )
                 trailingSlash = true;
 //            else if ( path.equals("..") )
 //                trailingSlash = true;
         }
-        
+
         for ( int j = 0 ; j < N ; j++ ) {
             String s = segments[j];
             if ( s.equals(".") )
@@ -580,7 +584,7 @@ public class IRI3986 {
                     segments[j-1] = null;
             }
         }
-        
+
         // Build string again. Skip nulls.
         StringJoiner joiner = new StringJoiner("/");
         if ( initialSlash )
@@ -597,9 +601,9 @@ public class IRI3986 {
         String s = joiner.toString();
         return s;
     }
-    
+
     // >> Copied from jena-iri
-    static String removeDotSegments(String path) {
+    static String jenaIRIremoveDotSegments(String path) {
         // 5.2.4 step 1.
         int inputBufferStart = 0;
         int inputBufferEnd = path.length();
@@ -655,7 +659,7 @@ public class IRI3986 {
         // 5.2.4 3
         return output.toString();
     }
-    
+
     private static void removeLastSeqment(StringBuffer output) {
         int ix = output.length();
         while (ix > 0) {
@@ -671,12 +675,12 @@ public class IRI3986 {
     public String rebuild() {
         return rebuild(getScheme(), getAuthority(), getPath(), getQuery(), getFragment());
     }
-    
+
     static IRI3986 build(String scheme, String authority, String path, String query, String fragment) {
         String s = rebuild(scheme, authority, path, query, fragment);
         return IRI3986.create(s);
     }
-    
+
     private static String rebuild(String scheme, String authority, String path, String query, String fragment) {
         StringBuilder result = new StringBuilder();
         if ( scheme != null ) {
@@ -707,11 +711,11 @@ public class IRI3986 {
     // URN specific.
     //   "urn", ASCII, min 2 char NID min one char  NSS (urn:NID:NSS)
     //   Query string starts ?+ or ?=
-    
+
     // Without rq-components and "#" f-component
     private static String URN_REGEX_ASSIGNED_NAME = "([uU][rR][nN]:)([a-zA-Z0-9][-a-zA-Z0-9]{0,28}[a-zA-Z0-9])?:.*";
     private static Pattern URN_PATTERN_ASSIGNED_NAME = Pattern.compile("^urn:([a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z]):..*");
-    
+
     private void checkURN() {
         String scheme = getScheme();
         if ( ! scheme.equals("urn") )
@@ -725,16 +729,16 @@ public class IRI3986 {
                 errorHandler.error("urn: improper start to query string.");
             urnCharCheck("query", qs);
         }
-        
+
         if ( hasFragment() )
             urnCharCheck("fragement", getFragment());
     }
-    
+
     private void urnCharCheck(String label, String string) {
         for ( int i = 0 ; i < string.length(); i++ ) {
             char ch = iriStr.charAt(i);
             if ( ch > 0x7F)
-                errorHandler.error("urn "+label+" : Non-ASCII character"); 
+                errorHandler.error("urn "+label+" : Non-ASCII character");
         }
     }
 
@@ -747,7 +751,7 @@ public class IRI3986 {
     private void checkFILE() {
         if ( ! hasAuthority() )
             // file:/path.
-            errorHandler.error("file: URLs are of the form file:///path/..."); 
+            errorHandler.error("file: URLs are of the form file:///path/...");
         if ( authority0 != authority1 )
             // file://path1/path2/..., so path becomes the "authority"
             errorHandler.error("file: URLs are of the form file:///path/...");
@@ -795,7 +799,6 @@ public class IRI3986 {
         //               / path-empty
         //
         // Check not starting with ':' then path-noscheme is the same as path-rootless.
-
         char ch = charAt(start);
         if ( ch == ':' )
             errorHandler.error("A URI without a scheme can't start with a ':'");
@@ -813,9 +816,9 @@ public class IRI3986 {
         if ( ch1 == '/' && ch2 == '/' ) {
             p += 2;
             p = authority(p);
-            char ch3 = charAt(p);
-            if ( p != length && ch3 != '/' )
-                errorHandler.error("Bad path after authority: "+displayChar(ch3));
+//            char ch3 = charAt(p);
+//            if ( p != length && ch3 != '/' )
+//                errorHandler.error("Bad path after authority: "+displayChar(ch3));
         }
         return p;
     }
@@ -873,7 +876,7 @@ public class IRI3986 {
                 // Reset port colon tracking.
                 countColon = 0;
                 lastColon = -1;
-            } else if ( ch == '[' ) { 
+            } else if ( ch == '[' ) {
                 // Still to check whether user authority
                 if ( startIPv6 >= 0 )
                     errorHandler.error("Bad IPv6 address - multiple '['");
@@ -888,13 +891,13 @@ public class IRI3986 {
                 // Reset port colon tracking.
                 countColon = 0;
                 lastColon = -1;
-            } else if ( ! isIPChar(ch, p) ) { 
+            } else if ( ! isIPChar(ch, p) ) {
                 // All the characters in an (i)authority section, regardless of correct use.
                 break;
             }
             p++;
         }
-        
+
         if ( startIPv6 != -1 ) {
             if ( endIPv6 == -1 )
                 errorHandler.error("Bad IPv6 address - missing ']'");
@@ -1009,9 +1012,6 @@ public class IRI3986 {
 
         if ( x1 < 0 ) {
             x1 = start;
-        } else {
-            path0 = start;
-            path1 = x1;
         }
 
         int x2 = query(x1);
@@ -1125,7 +1125,7 @@ public class IRI3986 {
     // Unicode - not a character
     private static final char EOF = ParseLib.EOF;
 
-    // Is the character at location 'x' percent-encoded? Looks at next two characters. 
+    // Is the character at location 'x' percent-encoded? Looks at next two characters.
     private boolean isPctEncoded(char ch, int x) {
         if ( ch != '%' )
             return false;
