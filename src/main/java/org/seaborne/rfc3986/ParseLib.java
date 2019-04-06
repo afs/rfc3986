@@ -37,6 +37,12 @@ package org.seaborne.rfc3986;
         return range(ch, '0', '9' ) || range(ch, 'A', 'F' ) || range(ch, 'a', 'f' )  ;
     }
 
+    public static int hexValue(char ch) {
+        if ( range(ch, '0', '9' ) ) return ch-'0';
+        if ( range(ch, 'A', 'F' ) ) return ch-'A'+10;  
+        if ( range(ch, 'a', 'f' ) ) return ch-'a'+10;
+        return -1;
+    }
     
     private static int CASE_DIFF = 'a'-'A';     // 0x20.
     /* Check whether the character and the next character match the expected characters.

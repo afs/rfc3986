@@ -18,7 +18,7 @@
 
 package org.seaborne.rfc3986;
 
-import static org.seaborne.rfc3986.ParseLib.containsAtIgnoreCase;
+import static org.seaborne.rfc3986.ParseLib.*;
 import static org.seaborne.rfc3986.ParseLib.displayChar;
 import static org.seaborne.rfc3986.ParseLib.isHexDigit;
 import static org.seaborne.rfc3986.ParseLib.range;
@@ -365,12 +365,8 @@ public class IRI3986 {
 //
 //     6.2.2.1.  Case Normalization
 
-        if ( scheme != null )
-            scheme = scheme.toLowerCase(Locale.ROOT);
-        if ( authority != null )
-            authority = authority.toLowerCase(Locale.ROOT);
-
-        // percent encoding - to upper case.
+        scheme = toLowerCase(scheme);
+        authority = toLowerCase(authority);
 
 //     6.2.2.2.  Percent-Encoding Normalization
 //
@@ -382,8 +378,14 @@ public class IRI3986 {
 //        be normalized by decoding any percent-encoded octet that corresponds
 //        to an unreserved character, as described in Section 2.3.
 
+        // percent to upper case.
         // percent encoding - to unreserved
-
+        // Occurs in authority, path, query and fragment.
+        authority = normalizePercent(authority);
+        path =      normalizePercent(path);
+        query =     normalizePercent(query);
+        fragment =  normalizePercent(fragment);
+        
 //     6.2.2.3.  Path Segment Normalization
 
         if ( path != null )
@@ -412,6 +414,48 @@ public class IRI3986 {
 
         String s = rebuild(scheme, authority, path, query, fragment);
         return new IRI3986(s);
+    }
+    
+    private String normalizePercent(String str) {
+        if ( str == null )
+            return str;
+        int idx = str.indexOf('%');
+        if ( idx < 0 )
+            return str;
+        final int len = str.length();
+        StringBuilder sb = new StringBuilder(len);
+        for ( int i = 0 ; i < len ; i++ ) {
+            char ch = str.charAt(i);
+            if ( ! isPctEncoded(str, i) ) {
+                sb.append(ch);
+                continue;
+            }
+            char ch1 = toUpper(str.charAt(i+1));
+            char ch2 = toUpper(str.charAt(i+2));
+            i += 2;
+            char x = (char)(hexValue(ch1)*16 + hexValue(ch2));
+                
+            if ( unreserved(x) ) { 
+                sb.append(x);
+                continue;
+            }
+            sb.append('%');
+            sb.append(ch1);
+            sb.append(ch2);
+        }
+        return sb.toString();
+    }
+    
+    private char toUpper(char ch) {
+        if (ch >= 'a' && ch <= 'z') 
+            ch = (char)(ch + ('A'-'a'));
+        return ch;
+    }
+
+    private String toLowerCase(String string) {
+        if ( string == null )
+            return null;
+        return string.toLowerCase(Locale.ROOT);
     }
 
     /** Resolve {@code this } using {@code baseIRI} as the base : 3986 section ?? */
@@ -713,8 +757,7 @@ public class IRI3986 {
     //   Query string starts ?+ or ?=
 
     // Without rq-components and "#" f-component
-    private static String URN_REGEX_ASSIGNED_NAME = "([uU][rR][nN]:)([a-zA-Z0-9][-a-zA-Z0-9]{0,28}[a-zA-Z0-9])?:.*";
-    private static Pattern URN_PATTERN_ASSIGNED_NAME = Pattern.compile("^urn:([a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z]):..*");
+    private static Pattern URN_PATTERN_ASSIGNED_NAME = Pattern.compile("^urn:([a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z]):.+");
 
     private void checkURN() {
         String scheme = getScheme();
@@ -1131,6 +1174,19 @@ public class IRI3986 {
             return false;
         char ch1 = charAt(x+1);
         char ch2 = charAt(x+2);
+        return percentCheck(ch1, ch2);
+    }
+
+    private static boolean isPctEncoded(String str, int x) {
+        char ch = str.charAt(x);
+        if ( ch != '%' )
+            return false;
+        char ch1 = str.charAt(x+1);
+        char ch2 = str.charAt(x+2);
+        return percentCheck(ch1, ch2);
+    }
+
+    private static boolean percentCheck(char ch1, char ch2) {
         if ( ch1 == EOF || ch2 == EOF )
             errorHandler.error("Incomplete %-encoded character");
             //return false;

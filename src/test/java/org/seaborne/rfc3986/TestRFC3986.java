@@ -378,6 +378,31 @@ public class TestRFC3986 {
     }
 
     @Test
+    public void normalize_11() {
+        testNormalize("http://host%20/?q=s", "http://host%20/?q=s");
+    }
+
+    @Test
+    public void normalize_12() {
+        testNormalize("http://hOSt%20/?q=s", "http://host%20/?q=s");
+    }
+    
+    @Test
+    public void normalize_13() {
+        testNormalize("http://hOSt%20/foo%62ar?q=s", "http://host%20/foobar?q=s");
+    }
+    
+    @Test
+    public void normalize_14() {
+        testNormalize("http://host/foobar?q=s%74", "http://host/foobar?q=st");
+    }
+    
+    @Test
+    public void normalize_15() {
+        testNormalize("http://host/foobar#%7E", "http://host/foobar#~");
+    }
+    
+    @Test
     public void resolve_01() {
         testResolve("http://example/dir/", "", "http://example/dir/");
     }
