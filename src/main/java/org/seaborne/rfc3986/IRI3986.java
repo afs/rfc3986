@@ -40,6 +40,8 @@ import java.util.regex.Pattern;
  * {@code java.net.URI}
  * parses and allocates and follows RFC 2396 with modifications (several of which are in
  * RFC 3986).
+ * 
+ * See {@link RFC3986} for operations involving {@code IRI3986}.  
  *
  * This package implements the algorithms specified in RFC 3986 operations for:
  * <ul>
@@ -84,17 +86,11 @@ import java.util.regex.Pattern;
  *     RFC3986 iri = RFC3986.create(string);
  *     IRI3986 iri2 = iri.resolve(base);
  * </pre>
- * or
- * <pre>
- *     IRI3986 base = ...
- *     IRI3986 iri = RFC3986.create(string);
- *     IRI3986 iri2 = RFC3986.resolve(iri, base);
- * </pre>
  * Normalize:
  * <pre>
  *     RFC3986 base = ...
  *     IRI3986 iri = RFC3986.create(string);
- *     IRI3986 iri2 = RFC3986.normalize(iri);
+ *     IRI3986 iri2 = iri.normalize();
  * </pre>
  */
 
@@ -104,7 +100,7 @@ public class IRI3986 {
      * This operation checks the string against the RFC3986/7 grammar; it does not apply
      * scheme specific rules
      */
-    public static void check(String iristr) {
+    /*package*/ static void check(String iristr) {
         check(iristr, false);
     }
 
@@ -112,7 +108,7 @@ public class IRI3986 {
      * Determine if the string conforms to the IRI syntax. If not, it throws an exception.
      * This operation optionally also applies some scheme specific rules.
      */
-    public static void check(String iristr, boolean applySchemeSpecificRules) {
+    /*package*/ static void check(String iristr, boolean applySchemeSpecificRules) {
         IRI3986 iri = new IRI3986(iristr).process();
         if ( applySchemeSpecificRules )
             iri.checkSchemeSpecificRules();
@@ -122,7 +118,7 @@ public class IRI3986 {
      * Determine if the string conforms to the IRI syntax.
      * If not, it throws an exception
      */
-    public static IRI3986 create(String iristr) {
+    /*package*/ static IRI3986 create(String iristr) {
         IRI3986 iri = new IRI3986(iristr).process();
         return iri;
     }
@@ -458,7 +454,7 @@ public class IRI3986 {
         return string.toLowerCase(Locale.ROOT);
     }
 
-    /** Resolve {@code this } using {@code baseIRI} as the base : 3986 section ?? */
+    /** Resolve {@code this } using {@code baseIRI} as the base : 3986 section 5 */
     public IRI3986 resolve(IRI3986 baseIRI) {
         // Base must have scheme. Be lax.
         return transformReferences(this, baseIRI);

@@ -49,11 +49,11 @@ import java.util.regex.Pattern;
  * <h4>Check</h4>
  * Check conformance with the RFC 3986 grammar:
  * <pre>
- * RFC3986.check(string);
+ *     RFC3986.check(string);
  * </pre>
  * Check conformance with the RFC 3986 grammar and any applicable scheme specific rules:
  * <pre>
- * RFC3986.check(string, true);
+ *     RFC3986.check(string, true);
  * </pre>
  * <h4>Extract the components of IRI</h4>
  * <pre>
@@ -63,15 +63,14 @@ import java.util.regex.Pattern;
  * </pre>
  * <h4>Resolve</h4> 
  * <pre>
- *     RFC3986 base = ...
- *     RFC3986 iri = RFC3986.create(string);
- *     RFC3986 iri2 = iri.resolve(base);
+ *     IRI3986 base = .RFC3986.create(baseIRIString);
+ *     IRI3986 iri = RFC3986.create(string);
+ *     IRI3986 iri2 = RFC3986.resolve(base);
  * </pre>
  * <h4>Normalize</h4> 
  * <pre>
- *     RFC3986 base = ...
- *     RFC3986 iri = RFC3986.create(string);
- *     RFC3986 iri2 = iri.normalize();
+ *     IRI3986 iri  = RFC3986.create(string);
+ *     IRI3986 iri2 = RFC3986.normalize(iri);
  * </pre>
  */
 
