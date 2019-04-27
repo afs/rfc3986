@@ -1,0 +1,5 @@
+#!/bin/bash
+
+H="$HOME/ASF/iri4ld"
+
+java -cp $H/target/classes iri.CmdIRI "$@"
