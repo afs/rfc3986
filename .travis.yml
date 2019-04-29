@@ -2,6 +2,9 @@ language: java
 sudo: false
 script: mvn verify
 
+## Not trusty - openjdk11 install fails.
+dist: xenial
+
 jdk:
   - openjdk11
 
