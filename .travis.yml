@@ -2,10 +2,6 @@ language: java
 sudo: false
 script: mvn verify
 
-## Not trusty - openjdk11 install fails.
-## 2019-04-29: https://travis-ci.community/t/install-of-openjdk11-is-failing-again/3061/16
-dist: xenial
-
 jdk:
   - openjdk11
 
