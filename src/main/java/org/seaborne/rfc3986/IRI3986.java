@@ -93,8 +93,9 @@ import java.util.regex.Pattern;
  *     IRI3986 iri2 = iri.normalize();
  * </pre>
  */
-
 public class IRI3986 {
+    // Grammars at the end of the file. 
+    // RFC 3986, RFC 3987 and teh definition of ABNF names (RFC 5234)
     /**
      * Determine if the string conforms to the IRI syntax. If not, it throws an exception.
      * This operation checks the string against the RFC3986/7 grammar; it does not apply
@@ -123,17 +124,28 @@ public class IRI3986 {
         return iri;
     }
 
+    // Always set,
     private final String iriStr;
     private final int length;
 
     private static ErrorHandler errorHandler = s-> { throw new IRIParseException(s);};
+
+    private static void error(int posn, String s) {
+        if ( posn >= 0 )
+            s = "[Posn "+posn+"] "+s;
+        error(s);
+    }
+    
+    private static void error(String s) {
+        errorHandler.error(s);
+    }
 
     public static void setErrorHandler(ErrorHandler errHandler) {
         errorHandler = errHandler;
     }
 
     // Offsets of parsed components, together with cached value.
-    // The value is not calculated until first used, making pure checking
+    // The value is not calculated until first used, so that pure checking
     // not need to create any extra objects.
     private int scheme0 = -1;
     private int scheme1 = -1;
@@ -167,11 +179,17 @@ public class IRI3986 {
         this.length = iriStr.length();
     }
 
-    @Override
-    public String toString() {
+    /** The IRI in string form. This is guaranteed to parse to an equals IRI. */
+    public final String str() {
         if ( iriStr != null )
             return iriStr;
         return rebuild();
+    }
+    
+    @Override
+    public String toString() {
+        // Human readable form - may be overridden.
+        return str();
     }
 
     /** Parse (i.e. check) or create an IRI object. */
@@ -199,7 +217,7 @@ public class IRI3986 {
             else
                 label = "path";
             //System.err.printf("(x3=%d, length=%d)\n", x, length);
-            errorHandler.error("Bad character in "+label+" component: "+displayChar(charAt(x)));
+            error("Bad character in "+label+" component: "+displayChar(charAt(x)));
         }
         return this;
     }
@@ -341,7 +359,6 @@ public class IRI3986 {
         String query = getQuery();
         String fragment = getFragment();
 
-
 //        6.2.2.  Syntax-Based Normalization
 //
 //        Implementations may use logic based on the definitions provided by
@@ -409,7 +426,7 @@ public class IRI3986 {
         // None.
 
         String s = rebuild(scheme, authority, path, query, fragment);
-        return new IRI3986(s);
+        return new IRI3986(s).process();
     }
     
     private String normalizePercent(String str) {
@@ -758,14 +775,14 @@ public class IRI3986 {
     private void checkURN() {
         String scheme = getScheme();
         if ( ! scheme.equals("urn") )
-            errorHandler.error("urn: scheme name is not lowercase 'urn\'");
+            error("urn: scheme name is not lowercase 'urn\'");
         boolean matches = URN_PATTERN_ASSIGNED_NAME.matcher(iriStr).matches();
         if ( !matches )
-            errorHandler.error("urn: does not match the assigned-name regular expession");
+            error("urn: does not match the assigned-name regular expession");
         if ( hasQuery() ) {
             String qs = getQuery();
             if ( ! qs.startsWith("+") && ! qs.startsWith("=") )
-                errorHandler.error("urn: improper start to query string.");
+                error("urn: improper start to query string.");
             urnCharCheck("query", qs);
         }
 
@@ -777,23 +794,23 @@ public class IRI3986 {
         for ( int i = 0 ; i < string.length(); i++ ) {
             char ch = iriStr.charAt(i);
             if ( ch > 0x7F)
-                errorHandler.error("urn "+label+" : Non-ASCII character");
+                error("urn "+label+" : Non-ASCII character");
         }
     }
 
     private void checkHTTP() {
         if ( getAuthority().contains("@") )
             //Warning?
-            errorHandler.error("userinfo (e.g. user:password) in authority section");
+            error("userinfo (e.g. user:password) in authority section");
     }
 
     private void checkFILE() {
         if ( ! hasAuthority() )
             // file:/path.
-            errorHandler.error("file: URLs are of the form file:///path/...");
+            error("file: URLs are of the form file:///path/...");
         if ( authority0 != authority1 )
             // file://path1/path2/..., so path becomes the "authority"
-            errorHandler.error("file: URLs are of the form file:///path/...");
+            error("file: URLs are of the form file:///path/...");
     }
 
     // ---- Scheme
@@ -840,7 +857,7 @@ public class IRI3986 {
         // Check not starting with ':' then path-noscheme is the same as path-rootless.
         char ch = charAt(start);
         if ( ch == ':' )
-            errorHandler.error("A URI without a scheme can't start with a ':'");
+            error("A URI without a scheme can't start with a ':'");
         int p = maybeAuthority(start);
         return pathQueryFragment(p);
     }
@@ -857,7 +874,7 @@ public class IRI3986 {
             p = authority(p);
 //            char ch3 = charAt(p);
 //            if ( p != length && ch3 != '/' )
-//                errorHandler.error("Bad path after authority: "+displayChar(ch3));
+//                error("Bad path after authority: "+displayChar(ch3));
         }
         return p;
     }
@@ -881,6 +898,9 @@ public class IRI3986 {
      * iauthority     = [ iuserinfo "@" ] ihost [ ":" port ]
      * iuserinfo      = *( iunreserved / pct-encoded / sub-delims / ":" )
      * ihost          = IP-literal / IPv4address / ireg-name
+     * 
+     * Theer are further restrictions on DNS names.
+     * RFC 5890, RFC 5891, RFC 5892, RFC 5893
      */
     private int authority(int start) {
         int end = length;
@@ -902,15 +922,15 @@ public class IRI3986 {
             } else if ( ch == '/' ) {
                 // Normal exit
                 if ( startIPv6 >= 0 && endIPv6 == -1)
-                    errorHandler.error("Bad IPv6 address - No closing ']'");
+                    error(p+1, "Bad IPv6 address - No closing ']'");
                 break;
             } else if ( ch == '@' ) {
                 if ( endUserInfo != -1 )
-                    errorHandler.error("Bad authority segment - multiple '@'");
+                    error(p+1, "Bad authority segment - multiple '@'");
                 // Found userinfo end; reset counts and trackers.
                 // Check for IPv6 []
                 if ( startIPv6 != -1 || endIPv6 != -1 )
-                    errorHandler.error("Bad authority segment - contains '[' or ']'");
+                    error(p+1, "Bad authority segment - contains '[' or ']'");
                 endUserInfo = p;
                 // Reset port colon tracking.
                 countColon = 0;
@@ -918,14 +938,14 @@ public class IRI3986 {
             } else if ( ch == '[' ) {
                 // Still to check whether user authority
                 if ( startIPv6 >= 0 )
-                    errorHandler.error("Bad IPv6 address - multiple '['");
+                    error(p+1, "Bad IPv6 address - multiple '['");
                 startIPv6 = p;
             } else if ( ch == ']' ) {
                 // Still to check whether user authority
                 if ( startIPv6 == -1 )
-                    errorHandler.error("Bad IPv6 address - No '[' to match ']'");
+                    error(p+1, "Bad IPv6 address - No '[' to match ']'");
                 if ( endIPv6 >= 0 )
-                    errorHandler.error("Bad IPv6 address - multiple ']'");
+                    error(p+1, "Bad IPv6 address - multiple ']'");
                 endIPv6 = p;
                 // Reset port colon tracking.
                 countColon = 0;
@@ -939,7 +959,7 @@ public class IRI3986 {
 
         if ( startIPv6 != -1 ) {
             if ( endIPv6 == -1 )
-                errorHandler.error("Bad IPv6 address - missing ']'");
+                error("Bad IPv6 address - missing ']'");
             char ch1 = iriStr.charAt(startIPv6);
             char ch2 = iriStr.charAt(endIPv6);
             ParseIPv6Address.checkIPv6(iriStr, startIPv6, endIPv6+1);
@@ -966,7 +986,7 @@ public class IRI3986 {
 
         // Check only one ":" in host.
         if ( countColon > 1 )
-            errorHandler.error("Multiple ':' in host:port section");
+            error(-1, "Multiple ':' in host:port section");
 
         if ( lastColon != -1 ) {
             host1 = lastColon;
@@ -981,15 +1001,17 @@ public class IRI3986 {
                 x++;
             }
             if ( x != port1 )
-                errorHandler.error("Bad port");
-            // Check port.
-
+                error(-1, "Bad port");
         } else
             host1 = limit;
 //        String u = part(input, endUserInfo==-1?-1:start, endUserInfo);
 //        String h = part(input, host0, host1);
 //        String ps = part(input, port0, port1);
 //        System.out.printf("Authority: |%s|%s|%s|\n", u,h,ps);
+
+        // XXX Check DNS name.
+        // IPv4 address or DNS name between host0 and host1.
+
         return limit;
     }
 
@@ -1001,7 +1023,7 @@ public class IRI3986 {
             if ( ch2 == '/')
                 return x;
             if ( !isDigit(ch2) )
-                errorHandler.error("Bad character terminating port number : "+ch2);
+                error(x+1, "Bad character terminating port number : "+ch2);
             x++;
         }
         return x;
@@ -1094,10 +1116,12 @@ public class IRI3986 {
                 segStart = p+1;
                 // Maybe new one.
                 if ( ch != '/') {
+                    if ( ch == ' ' )
+                        error(p+1, "Space found in IRI");
                     // ? or # else error
                     if ( ch == '?' || ch == '#' )
                         break;
-                    errorHandler.error("not query or fragement: "+ch);
+                    error(p+1, "not query or fragement: "+ch);
                 }
             }
             p++;
@@ -1170,7 +1194,7 @@ public class IRI3986 {
             return false;
         char ch1 = charAt(x+1);
         char ch2 = charAt(x+2);
-        return percentCheck(ch1, ch2);
+        return percentCheck(x, ch1, ch2);
     }
 
     private static boolean isPctEncoded(String str, int x) {
@@ -1179,18 +1203,18 @@ public class IRI3986 {
             return false;
         char ch1 = str.charAt(x+1);
         char ch2 = str.charAt(x+2);
-        return percentCheck(ch1, ch2);
+        return percentCheck(x, ch1, ch2);
     }
 
-    private static boolean percentCheck(char ch1, char ch2) {
+    private static boolean percentCheck(int idx, char ch1, char ch2) {
         if ( ch1 == EOF || ch2 == EOF )
-            errorHandler.error("Incomplete %-encoded character");
+            error(idx+1, "Incomplete %-encoded character");
             //return false;
         if ( isHexDigit(ch1) && isHexDigit(ch2) )
             return true;
 //        if ( range(ch1, 'a', 'f') || range(ch2, 'a', 'f') )
-//            errorHandler.error("Bad %-encoded character (must be upper case hex digits)");
-        errorHandler.error("Bad %-encoded character ["+displayChar(ch1)+" "+displayChar(ch2)+"]");
+//            error("Bad %-encoded character (must be upper case hex digits)");
+        error(idx+1, "Bad %-encoded character ["+displayChar(ch1)+" "+displayChar(ch2)+"]");
         return false;
     }
 
@@ -1287,14 +1311,32 @@ public class IRI3986 {
         return isPChar(ch, posn) || isUcsChar(ch);
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(iriStr);
+    }
 
-    /* ABNF -> parser */
-    /* JavaCC */
-    // Java's URI - not 3986.
-    //https://github.com/dmfs/uri-toolkit
+    // hashCode and equals.
+    // Slots like "authority" are caches and only set when their value is needed
+    // in the associated getter.
+    // The positions in the iriStr (authority0, authority1) are set.
+    // An IRI3986 always as the iriStr set.
+    
+    @Override
+    public boolean equals(Object obj) {
+        if ( this == obj )
+            return true;
+        if ( obj == null )
+            return false;
+        if ( !(obj instanceof IRI3986) )
+            return false;
+        IRI3986 other = (IRI3986)obj;
+        return Objects.equals(iriStr, other.iriStr);
+    }
+}
+/* RDF 3986
 
-    /*
-URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
+   URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
 
    hier-part     = "//" authority path-abempty
                  / path-absolute
@@ -1374,8 +1416,6 @@ URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
                  / "*" / "+" / "," / ";" / "="
 
-
-
   RFC 3897 : IRIs
 ----
     NB "unreserved" used in
@@ -1402,9 +1442,9 @@ URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
             DIGIT          =  %x30-39            ; 0-9
 
 
-     */
-    /* ABNF core rules: RFC 5234
-     *
+ */
+/* ABNF core rules: (ABNF is RFC 5234)
+
          ALPHA          =  %x41-5A / %x61-7A  ; A-Z / a-z
 
          BIT            =  "0" / "1"
@@ -1458,5 +1498,5 @@ URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
          WSP            =  SP / HTAB
                                ; white space
 
-     */
-}
+ */
+

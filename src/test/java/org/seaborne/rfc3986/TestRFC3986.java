@@ -18,8 +18,7 @@
 
 package org.seaborne.rfc3986;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.net.URI;
 
@@ -294,7 +293,25 @@ public class TestRFC3986 {
     // Bad by URN specific rule for the query components.
     @Test public void parse_urn_bad_09()    { badSpecific("urn:local:abc/def?query=foo"); }
 
+    @Test public void equals_01()           {
+        IRI3986 iri1 = IRI3986.create("http://example/");
+        IRI3986 iri2 = IRI3986.create("http://example/");
+        assertTrue(iri1.equals(iri2));
+        assertEquals(iri1.hashCode(), iri2.hashCode());
+    }
 
+    @Test public void equals_02()           {
+        IRI3986 iri1 = IRI3986.create("http://example/.");
+        IRI3986 iri2 = iri1.normalize();
+        assertFalse(iri1.equals(iri2));
+    }
+
+    // str tested in good()
+    @Test public void str_01()           {
+        IRI3986 iri1 = IRI3986.create("http://example/.");
+        IRI3986 iri2 = iri1.normalize();
+        assertNotEquals(iri1.str(), iri2.str());
+    }
 
     private void testComponents(String string, String scheme, String authority, String path, String query, String fragment) {
         IRI3986 iri = RFC3986.create(string);
@@ -318,6 +335,7 @@ public class TestRFC3986 {
         iri.checkSchemeSpecificRules();
         URI javaURI = URI.create(string);
         assertEquals(string, iri.rebuild());
+        assertEquals(string, iri.str());
     }
 
     private void goodNoIRICheck(String string) {
