@@ -18,6 +18,7 @@
 
 package iri;
 
+import org.seaborne.rfc3986.IRI3986;
 import org.seaborne.rfc3986.IRIParseException;
 import org.seaborne.rfc3986.RFC3986;
 
@@ -27,12 +28,19 @@ public class CmdIRI {
             System.err.println("No iri string");
             System.exit(1);
         }
-        for (String s : args ) {
-            if ( s.startsWith("<") && s.endsWith(">") )
-                s = s.substring(1, s.length()-1);
-            
+        for (String iriStr : args ) {
+            if ( iriStr.startsWith("<") && iriStr.endsWith(">") )
+                iriStr = iriStr.substring(1, iriStr.length()-1);
            try {
-                RFC3986.create(s);
+                IRI3986 iri = RFC3986.create(iriStr);
+                IRI3986 iri1 = iri.normalize();
+
+                System.out.println(iriStr);
+                System.out.println("      ==> "+iri) ;
+                if ( ! iri.equals(iri1) )
+                    System.out.println("      ==> "+iri1) ;
+                if ( ! iri.isAbsolute() )
+                    System.out.println("Relative: "+!iri.isAbsolute()) ;
             } catch (IRIParseException ex) {
                 System.err.println(ex.getMessage());
             }
