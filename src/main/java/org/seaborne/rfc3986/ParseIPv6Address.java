@@ -26,9 +26,9 @@ import static org.seaborne.rfc3986.ParseLib.range;
 /**
 <pre>
     IP-literal    = "[" ( IPv6address / IPvFuture  ) "]"
-    
+
     IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-    
+
     IPv6address   =                            6( h16 ":" ) ls32
                   /                       "::" 5( h16 ":" ) ls32
                   / [               h16 ] "::" 4( h16 ":" ) ls32
@@ -38,11 +38,11 @@ import static org.seaborne.rfc3986.ParseLib.range;
                   / [ *4( h16 ":" ) h16 ] "::"              ls32
                   / [ *5( h16 ":" ) h16 ] "::"              h16
                   / [ *6( h16 ":" ) h16 ] "::"
-    
+
     h16           = 1*4HEXDIG
     ls32          = ( h16 ":" h16 ) / IPv4address
 </pre>
-    HEXDIG is '0' to '9 , 'A' to 'F' together with lower case, (RFC3986 - the normalized form is uppercase).  
+    HEXDIG is '0' to '9 , 'A' to 'F' together with lower case, (RFC3986 - the normalized form is uppercase).
  */
 
 public class ParseIPv6Address {
@@ -51,9 +51,9 @@ public class ParseIPv6Address {
     //   look for another ":",
     //   look for repeated (h16 ':')
     //   look for a IPv4 address or another h16
-    //   check the whole char sequence was parsed 
+    //   check the whole char sequence was parsed
     //   check the numbers of h16 units does not exceed the grammar restrictions.
-    
+
     // IPv6address   =                            6( h16 ":" ) ls32
     //               /                       "::" 5( h16 ":" ) ls32
     //               / [               h16 ] "::" 4( h16 ":" ) ls32
@@ -65,13 +65,13 @@ public class ParseIPv6Address {
     //               / [ *6( h16 ":" ) h16 ] "::"
     // h16           = 1*4HEXDIG
     // ls32          = ( h16 ":" h16 ) / IPv4address
-    
+
     /** Check an IPv6 address (including any delimiting []) */
     public static void checkIPv6(CharSequence string) {
-        checkIPv6(string, 0, string.length()); 
+        checkIPv6(string, 0, string.length());
     }
-    
-    
+
+
     public static void checkIPv6(CharSequence string, int start, int end) {
         int length = string.length();
         if ( start < 0 || end < 0 || end > length )
@@ -80,22 +80,22 @@ public class ParseIPv6Address {
             throw new IRIParseException("Empty IPv6 address");
         parseIPv6(string, start, end);
     }
-    
+
     private static int parseIPv6(CharSequence string, int start, int end) {
         if ( charAt(string, start) != '[' || charAt(string, end-1) != ']' )
             throw new IRIParseException("IPv6 (or later) address not properly delimited");
-        // end must be > start+1 by the above and checkIPv6 so no risk of missing here. 
+        // end must be > start+1 by the above and checkIPv6 so no risk of missing here.
         if ( charAt(string, start+1) == 'v' ) {
             // IPvFuture  = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
             return parseIPFuture(string, start+2, end-1);
         }
         return parseIPv6Sub(string, start+1, end-1);
     }
-    
+
     private static int parseIPFuture(CharSequence string, int start, int end) {
         int p = start;
         if ( p >= end )
-            throw new IRIParseException("Short IPFuture"); 
+            throw new IRIParseException("Short IPFuture");
         char ch = string.charAt(p);
         if ( ! isHexDigit(ch) )
             throw new IRIParseException("IPFuture: no version hexdigit");
@@ -105,7 +105,7 @@ public class ParseIPv6Address {
             throw new IRIParseException("IPFuture: no dot after version hexdigit");
         p++;
         // One or more.
-        while (p < end) { 
+        while (p < end) {
             ch = string.charAt(p);
             if ( ch == ']' )
                 break;
@@ -118,14 +118,14 @@ public class ParseIPv6Address {
             throw new IRIParseException("IPFuture: extra ']'");
         return p;
     }
-    
+
     private static int parseIPv6Sub(CharSequence string, int start, int end) {
         // start-end Without "[...]";
         int p = start;
 
         // Before the ::
         int h16c1 = -1;
-        int h16c2 = -1; 
+        int h16c2 = -1;
         int h16c = 0;
 
         //starting ::
@@ -161,7 +161,7 @@ public class ParseIPv6Address {
 
         //h16c2 == -1 => Didn't see ::
         //System.out.printf("(%d, %d)\n", h16c1, h16c2);
-        
+
         // Lookahead
         boolean IPv4 = false;
         for ( int i = 0 ; i < 4 ; i++ ) {
@@ -178,15 +178,9 @@ public class ParseIPv6Address {
             }
             // Unsure yet - loop
         }
-        // Seen "NNN."
-        // Seen "NNNN:"
-        // Seen "NNNN"
-        
-        // XXX h16c1 is 0-(N-1) counting.
-        
         if ( IPv4 ) {
             // Seen "NNN."
-            
+
             // ":" Validity rule.
             if ( h16c2 == -1 ) {
                 // h16c1 must be 6
@@ -209,7 +203,7 @@ public class ParseIPv6Address {
                     throw new IRIParseException("Malformed IPv6 address [case 1]");
             } else {
                 // h16c1+h16c2 <= 5
-                // or h16c1 <= 6, and h16c2 = 0  
+                // or h16c1 <= 6, and h16c2 = 0
                 if ( h16c2 == 0 ) {
                     if ( h16c1 > 6 )
                         throw new IRIParseException("Malformed IPv6 address [case 2]");
@@ -217,9 +211,9 @@ public class ParseIPv6Address {
                 else if ( h16c1+h16c2 > 5 )
                     throw new IRIParseException("Malformed IPv6 address [case 3]");
             }
-                
-                
-            
+
+
+
             int x = ipv6_hex4(string, p, end);
             p = x;
             if ( p != end )
@@ -228,7 +222,7 @@ public class ParseIPv6Address {
 
         return p;
     }
-    
+
     // (h16 ":")*
     // Returns index of just after the ":"
     // Does not accept h16 , no ":"
@@ -247,13 +241,13 @@ public class ParseIPv6Address {
         if ( ch1 != ':' )
             return p;
         x++;
-        // XXX
+        // New "start".
         p = x;
         return p;
     }
 
     /** h16 - 1 to 4 hex digits.
-     * Return character position after the digits or the start position if no hex digits seen. 
+     * Return character position after the digits or the start position if no hex digits seen.
      * That is, it may make no progress so in effect it is lookign for 0 to 4 hex digits.
      */
     private static int ipv6_hex4(CharSequence string, int start, int end) {
@@ -276,9 +270,9 @@ public class ParseIPv6Address {
             int x = ipv4_digits(string, p, end);
             if ( x < 0 || x == p )
                 throw new IRIParseException("Bad IPv4 address (no digits)");
-            // Check for in 0-255. 
+            // Check for in 0-255.
             if ( x-p == 3 )
-                checkIPv4Value(string, p); 
+                checkIPv4Value(string, p);
             if ( i != 3 ) {
                 char ch = charAt(string, x);
                 if ( ch != '.' )
@@ -300,10 +294,10 @@ public class ParseIPv6Address {
             if ( ! range(ch, '0', '9') )
                 return p+i;
         }
-        // 3 digits 
+        // 3 digits
         return p+3;
     }
-    
+
     private static void checkIPv4Value(CharSequence string, int p) {
         // 3 digits. Check for 255. Rather that "parse", we calculate the value.
         // Known to be ASCII digits.
@@ -312,9 +306,9 @@ public class ParseIPv6Address {
         char ch3 = charAt(string, p+2);
         int v = (ch1-'0')*100 + (ch2-'0')*10 + (ch3-'0');
         if ( v >= 255 )
-            throw new IRIParseException("IPv4 number out of range 0-255."); 
+            throw new IRIParseException("IPv4 number out of range 0-255.");
     }
-    
+
     /** Look at the end of the character sequence for an IPv4 address. */
     private static int peekForIPv4(CharSequence string, int start, int end) {
         //IPv4address   = dec-octet "." dec-octet "." dec-octet "." dec-octet
@@ -327,7 +321,7 @@ public class ParseIPv6Address {
         int countDot = 0;
         int firstDot = 0;
         // Max length of an IPv4 address is  3+1+3+1+3+1+3 = 15.
-        
+
         int p = -1;
         for ( int i = 0; i < 15 ; i++ ) {
             p = end-i-1;
@@ -343,14 +337,14 @@ public class ParseIPv6Address {
                     break;
             } else if ( ! range(ch,'0', '9') )
                 break;
-            
+
         }
-        
+
         if ( ! isIPv4 )
             return -1;
         if ( countDot != 3 )
             throw new IRIParseException("Malformed IPv4 address as part of IPv6 []");
-        
+
         // Move to start of IPv4 address. => function.
         for ( int i = 0 ; i < 3 ; i++ ) {
             p = firstDot-i-1;
@@ -360,12 +354,12 @@ public class ParseIPv6Address {
             if ( ! range(ch,'0', '9') )
                 break;
         }
-        
-        // check p . 
+
+        // check p .
         char ch = charAt(string, p-1);
         if ( ch != ':' )
             throw new IRIParseException("Malformed IPv4 address as part of IPv6; can't find ':' separator");
-        // Location of last : 
+        // Location of last :
         return p;
     }
 }

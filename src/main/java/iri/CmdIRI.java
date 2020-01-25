@@ -41,6 +41,9 @@ public class CmdIRI {
                     System.out.println("      ==> "+iri1) ;
                 if ( ! iri.isAbsolute() )
                     System.out.println("Relative: "+!iri.isAbsolute()) ;
+
+                iri.checkSchemeSpecificRules();
+
             } catch (IRIParseException ex) {
                 System.err.println(ex.getMessage());
             }

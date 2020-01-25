@@ -40,8 +40,8 @@ import java.util.regex.Pattern;
  * {@code java.net.URI}
  * parses and allocates and follows RFC 2396 with modifications (several of which are in
  * RFC 3986).
- * 
- * See {@link RFC3986} for operations involving {@code IRI3986}.  
+ *
+ * See {@link RFC3986} for operations involving {@code IRI3986}.
  *
  * This package implements the algorithms specified in RFC 3986 operations for:
  * <ul>
@@ -94,7 +94,7 @@ import java.util.regex.Pattern;
  * </pre>
  */
 public class IRI3986 {
-    // Grammars at the end of the file. 
+    // Grammars at the end of the file.
     // RFC 3986, RFC 3987 and teh definition of ABNF names (RFC 5234)
     /**
      * Determine if the string conforms to the IRI syntax. If not, it throws an exception.
@@ -135,7 +135,7 @@ public class IRI3986 {
             s = "[Posn "+posn+"] "+s;
         error(s);
     }
-    
+
     private static void error(String s) {
         errorHandler.error(s);
     }
@@ -185,7 +185,7 @@ public class IRI3986 {
             return iriStr;
         return rebuild();
     }
-    
+
     @Override
     public String toString() {
         // Human readable form - may be overridden.
@@ -304,10 +304,10 @@ public class IRI3986 {
 //        return false;
 //    }
 
-    private static char[] HTTPchars = { 'h','t','t','p',':' };
+    private static char[] HTTPchars =  { 'h','t','t','p',':' };
     private static char[] HTTPSchars = { 'h','t','t','p','s',':' };
-    private static char[] URNchars =  { 'u','r','n',':' };
-    private static char[] FILEchars = { 'f','i','l','e',':' };
+    private static char[] URNchars =   { 'u','r','n',':' };
+    private static char[] FILEchars =  { 'f','i','l','e',':' };
 
     private boolean isScheme(char[] schemeChars) { return containsAtIgnoreCase(iriStr, 0, schemeChars); }
 
@@ -317,7 +317,7 @@ public class IRI3986 {
         if ( ! hasScheme() )
             // no scheme, no checks.
             return this;
-        if ( isScheme(HTTPchars) )
+        if ( isScheme(HTTPchars) || isScheme(HTTPSchars) )
             checkHTTP();
         else if ( isScheme(FILEchars) )
             checkFILE();
@@ -329,7 +329,7 @@ public class IRI3986 {
     /** Encode RFC 3987 (IRI) as strict 3986 (URI) using %-encoding */
     public IRI3986 as3986() {
         // The URI is valid so we just need to encode non-ASCII characters.
-        for ( int i = 0 ; i < iriStr.length(); i++ ) {
+        for ( int i = 0 ; i < iriStr.length() ; i++ ) {
             char ch = iriStr.charAt(i);
             if ( ch > 0x7F)
                 return encode();
@@ -340,12 +340,12 @@ public class IRI3986 {
     // The encoding work.
     private IRI3986 encode() {
         StringBuilder sb = new StringBuilder(iriStr.length()+20);
-        for ( int i = 0 ; i < iriStr.length(); i++ ) {
+        for ( int i = 0 ; i < iriStr.length() ; i++ ) {
             char ch = iriStr.charAt(i);
             if ( ch <= 0x7F)
                 sb.append(ch);
             else
-                ParseLib.encodeAsHex(sb, '%', ch) ;
+                ParseLib.encodeAsHex(sb, '%', ch);
         }
         String s = sb.toString();
         return new IRI3986(s);
@@ -398,7 +398,7 @@ public class IRI3986 {
         path =      normalizePercent(path);
         query =     normalizePercent(query);
         fragment =  normalizePercent(fragment);
-        
+
 //     6.2.2.3.  Path Segment Normalization
 
         if ( path != null )
@@ -428,7 +428,7 @@ public class IRI3986 {
         String s = rebuild(scheme, authority, path, query, fragment);
         return new IRI3986(s).process();
     }
-    
+
     private String normalizePercent(String str) {
         if ( str == null )
             return str;
@@ -447,8 +447,8 @@ public class IRI3986 {
             char ch2 = toUpper(str.charAt(i+2));
             i += 2;
             char x = (char)(hexValue(ch1)*16 + hexValue(ch2));
-                
-            if ( unreserved(x) ) { 
+
+            if ( unreserved(x) ) {
                 sb.append(x);
                 continue;
             }
@@ -458,9 +458,9 @@ public class IRI3986 {
         }
         return sb.toString();
     }
-    
+
     private char toUpper(char ch) {
-        if (ch >= 'a' && ch <= 'z') 
+        if (ch >= 'a' && ch <= 'z')
             ch = (char)(ch + ('A'-'a'));
         return ch;
     }
@@ -581,7 +581,7 @@ public class IRI3986 {
         path, or excluding the entire base URI path if it does not contain
         any "/" characters).
 */
-        if ( base.hasAuthority() && base.getPath().isBlank() ) {
+        if ( base.hasAuthority() && base.getPath().isEmpty() ) {
             if ( ref.startsWith("/") )
                 return ref;
             return "/"+ref;
@@ -596,11 +596,11 @@ public class IRI3986 {
     /** 5.2.4.  Remove Dot Segments */
     private static String remove_dot_segments(String path) {
         String s1 = remove_dot_segments$(path);
-        if ( false ) {
-            String s2 = jenaIRIremoveDotSegments(path);
-            if ( ! Objects.equals(s1, s2) )
-                System.err.printf("remove_dot_segments : %s %s\n", s1, s2);
-        }
+//        if ( false ) {
+//            String s2 = jenaIRIremoveDotSegments(path);
+//            if ( ! Objects.equals(s1, s2) )
+//                System.err.printf("remove_dot_segments : %s %s\n", s1, s2);
+//        }
         return s1;
     }
 
@@ -659,74 +659,74 @@ public class IRI3986 {
         return s;
     }
 
-    // >> Copied from jena-iri
-    static String jenaIRIremoveDotSegments(String path) {
-        // 5.2.4 step 1.
-        int inputBufferStart = 0;
-        int inputBufferEnd = path.length();
-        StringBuffer output = new StringBuffer();
-        // 5.2.4 step 2.
-        while (inputBufferStart < inputBufferEnd) {
-            String in = path.substring(inputBufferStart);
-            // 5.2.4 step 2A
-            if (in.startsWith("./")) {
-                inputBufferStart += 2;
-                continue;
-            }
-            if (in.startsWith("../")) {
-                inputBufferStart += 3;
-                continue;
-            }
-            // 5.2.4 2 B.
-            if (in.startsWith("/./")) {
-                inputBufferStart += 2;
-                continue;
-            }
-            if (in.equals("/.")) {
-                in = "/"; // don't continue, process below.
-                inputBufferStart += 2; // force end of loop
-            }
-            // 5.2.4 2 C.
-            if (in.startsWith("/../")) {
-                inputBufferStart += 3;
-                removeLastSeqment(output);
-                continue;
-            }
-            if (in.equals("/..")) {
-                in = "/"; // don't continue, process below.
-                inputBufferStart += 3; // force end of loop
-                removeLastSeqment(output);
-            }
-            // 5.2.4 2 D.
-            if (in.equals(".")) {
-                inputBufferStart += 1;
-                continue;
-            }
-            if (in.equals("..")) {
-                inputBufferStart += 2;
-                continue;
-            }
-            // 5.2.4 2 E.
-            int nextSlash = in.indexOf('/', 1);
-            if (nextSlash == -1)
-                nextSlash = in.length();
-            inputBufferStart += nextSlash;
-            output.append(in.substring(0, nextSlash));
-        }
-        // 5.2.4 3
-        return output.toString();
-    }
-
-    private static void removeLastSeqment(StringBuffer output) {
-        int ix = output.length();
-        while (ix > 0) {
-            ix--;
-            if (output.charAt(ix) == '/')
-                break;
-        }
-        output.setLength(ix);
-    }
-    // << Copied from jena-iri
+//    // >> Copied from jena-iri to use for comparison.
+//    static String jenaIRIremoveDotSegments(String path) {
+//        // 5.2.4 step 1.
+//        int inputBufferStart = 0;
+//        int inputBufferEnd = path.length();
+//        StringBuffer output = new StringBuffer();
+//        // 5.2.4 step 2.
+//        while (inputBufferStart < inputBufferEnd) {
+//            String in = path.substring(inputBufferStart);
+//            // 5.2.4 step 2A
+//            if (in.startsWith("./")) {
+//                inputBufferStart += 2;
+//                continue;
+//            }
+//            if (in.startsWith("../")) {
+//                inputBufferStart += 3;
+//                continue;
+//            }
+//            // 5.2.4 2 B.
+//            if (in.startsWith("/./")) {
+//                inputBufferStart += 2;
+//                continue;
+//            }
+//            if (in.equals("/.")) {
+//                in = "/"; // don't continue, process below.
+//                inputBufferStart += 2; // force end of loop
+//            }
+//            // 5.2.4 2 C.
+//            if (in.startsWith("/../")) {
+//                inputBufferStart += 3;
+//                removeLastSeqment(output);
+//                continue;
+//            }
+//            if (in.equals("/..")) {
+//                in = "/"; // don't continue, process below.
+//                inputBufferStart += 3; // force end of loop
+//                removeLastSeqment(output);
+//            }
+//            // 5.2.4 2 D.
+//            if (in.equals(".")) {
+//                inputBufferStart += 1;
+//                continue;
+//            }
+//            if (in.equals("..")) {
+//                inputBufferStart += 2;
+//                continue;
+//            }
+//            // 5.2.4 2 E.
+//            int nextSlash = in.indexOf('/', 1);
+//            if (nextSlash == -1)
+//                nextSlash = in.length();
+//            inputBufferStart += nextSlash;
+//            output.append(in.substring(0, nextSlash));
+//        }
+//        // 5.2.4 3
+//        return output.toString();
+//    }
+//
+//    private static void removeLastSeqment(StringBuffer output) {
+//        int ix = output.length();
+//        while (ix > 0) {
+//            ix--;
+//            if (output.charAt(ix) == '/')
+//                break;
+//        }
+//        output.setLength(ix);
+//    }
+//    // << Copied from jena-iri
 
     /** RFC 3986 : 5.3.  Component Recomposition */
     public String rebuild() {
@@ -787,7 +787,7 @@ public class IRI3986 {
         }
 
         if ( hasFragment() )
-            urnCharCheck("fragement", getFragment());
+            urnCharCheck("fragment", getFragment());
     }
 
     private void urnCharCheck(String label, String string) {
@@ -893,19 +893,19 @@ public class IRI3986 {
      * So the section is only
      * unreserved / pct-encoded / sub-delims / ":" / "@" / "[" / "]".
      *   isPChar includes ":" / "@"
-     *    unreserved has "."
+     *   unreserved has "."
      *
      * iauthority     = [ iuserinfo "@" ] ihost [ ":" port ]
      * iuserinfo      = *( iunreserved / pct-encoded / sub-delims / ":" )
      * ihost          = IP-literal / IPv4address / ireg-name
-     * 
-     * Theer are further restrictions on DNS names.
+     *
+     * There are further restrictions on DNS names.
      * RFC 5890, RFC 5891, RFC 5892, RFC 5893
      */
     private int authority(int start) {
         int end = length;
         int p = start;
-        // userinfo@host:port
+        // Indexes for userinfo@host:port
         int endUserInfo = -1;
         int lastColon = -1;
         int countColon = 0;
@@ -1015,48 +1015,7 @@ public class IRI3986 {
         return limit;
     }
 
-    // Port number - may be zero length.
-    private int port(int x) {
-        while( x < length ) {
-            char ch2 = charAt(x);
-            // Normal end.
-            if ( ch2 == '/')
-                return x;
-            if ( !isDigit(ch2) )
-                error(x+1, "Bad character terminating port number : "+ch2);
-            x++;
-        }
-        return x;
-    }
-
-    private int authorityBasic(int start) {
-        // "Grab-all" authority scan.
-        int p = start;
-        int end = length;
-        while( p < length ) {
-            char ch = charAt(p);
-            // pchar = unreserved / pct-encoded / sub-delims / ":" / "@"
-            // but ':' '@' have restrictions.
-            if ( ! unreserved(ch) && ! isPctEncoded(ch, p) && !subDelims(ch) && ch != ':' && ch!='@' )
-                break;
-            p++;
-        }
-        if ( p > end-1 )
-            return p;
-        char chx = charAt(p);
-        // port?
-        if ( chx == ':' ) {
-            int portStart = p;
-            p++;
-            while( p < length ) {
-                char ch = charAt(p);
-                if ( ! isDigit(ch) )
-                    break;
-                p++;
-            }
-        }
-        return p;
-    }
+    // ---- hier-part :: /path?query#fragment
 
     private int pathQueryFragment(int start) {
         // hier-part [ "?" query ] [ "#" fragment ]
@@ -1083,9 +1042,7 @@ public class IRI3986 {
         return x3;
     }
 
-
     // ---- Path
-
     private int path(int start) {
         // path          = path-abempty   ; begins with "/" or is empty
         //               / path-absolute  ; begins with "/" but not "//"
@@ -1129,7 +1086,7 @@ public class IRI3986 {
 
         if ( p > start ) {
             path0 = start;
-            path1 = Math.min(p,length);;
+            path1 = Math.min(p,length);
         }
         return p;
     }
@@ -1209,11 +1166,8 @@ public class IRI3986 {
     private static boolean percentCheck(int idx, char ch1, char ch2) {
         if ( ch1 == EOF || ch2 == EOF )
             error(idx+1, "Incomplete %-encoded character");
-            //return false;
         if ( isHexDigit(ch1) && isHexDigit(ch2) )
             return true;
-//        if ( range(ch1, 'a', 'f') || range(ch2, 'a', 'f') )
-//            error("Bad %-encoded character (must be upper case hex digits)");
         error(idx+1, "Bad %-encoded character ["+displayChar(ch1)+" "+displayChar(ch2)+"]");
         return false;
     }
@@ -1321,7 +1275,7 @@ public class IRI3986 {
     // in the associated getter.
     // The positions in the iriStr (authority0, authority1) are set.
     // An IRI3986 always as the iriStr set.
-    
+
     @Override
     public boolean equals(Object obj) {
         if ( this == obj )
