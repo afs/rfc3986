@@ -304,10 +304,13 @@ public class IRI3986 {
 //        return false;
 //    }
 
-    private static char[] HTTPchars =  { 'h','t','t','p',':' };
-    private static char[] HTTPSchars = { 'h','t','t','p','s',':' };
-    private static char[] URNchars =   { 'u','r','n',':' };
-    private static char[] FILEchars =  { 'f','i','l','e',':' };
+    private static char[] HTTPchars     = {'h', 't', 't', 'p', ':'};
+    private static char[] HTTPSchars    = {'h', 't', 't', 'p', 's', ':'};
+    private static char[] URNchars      = {'u', 'r', 'n', ':'};
+    private static char[] URN_UUIDchars = {'u', 'r', 'n', ':', 'u', 'u', 'i', 'd', ':'};
+    // It's not officially registered but may be found in the wild.
+    private static char[] UUIDchars     = {'u', 'u', 'i', 'd', ':'};
+    private static char[] FILEchars     = {'f', 'i', 'l', 'e', ':'};
 
     private boolean isScheme(char[] schemeChars) { return containsAtIgnoreCase(iriStr, 0, schemeChars); }
 
@@ -321,8 +324,12 @@ public class IRI3986 {
             checkHTTP();
         else if ( isScheme(FILEchars) )
             checkFILE();
+        else if ( isScheme(URN_UUIDchars) )
+            checkUUID(URN_UUIDchars);
         else if ( isScheme(URNchars) )
             checkURN();
+        else if ( isScheme(UUIDchars) )
+            checkUUID(UUIDchars);
         return this;
     }
 
@@ -775,7 +782,7 @@ public class IRI3986 {
     private void checkURN() {
         String scheme = getScheme();
         if ( ! scheme.equals("urn") )
-            error("urn: scheme name is not lowercase 'urn\'");
+            error("urn: scheme name is not lowercase 'urn'");
         boolean matches = URN_PATTERN_ASSIGNED_NAME.matcher(iriStr).matches();
         if ( !matches )
             error("urn: does not match the assigned-name regular expession");
@@ -811,6 +818,28 @@ public class IRI3986 {
         if ( authority0 != authority1 )
             // file://path1/path2/..., so path becomes the "authority"
             error("file: URLs are of the form file:///path/...");
+    }
+
+    // 06e775ac{8}-2c38-11b2-801c-8086f2cc00c9
+    private static Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
+    private void checkUUID(char[] scheme) {
+        int idx = scheme.length;
+        int uuidLen = iriStr.length()-scheme.length;
+        String uuidStr = iriStr.substring(idx);
+        if ( uuidLen != 36 )
+            error(String.valueOf(scheme)+" Bad UUID string (wrong length): "+uuidStr);
+//        // May be allow
+//        if ( uuidLen != 32 )
+//            error(String.valueOf(scheme)+": Bad UUID string: "+getPath());
+
+        if ( hasQuery() )
+            error(String.valueOf(scheme)+" does not allow a query string: "+iriStr);
+        if ( hasFragment() )
+            error(String.valueOf(scheme)+" does not allow a fragement: "+iriStr);
+
+        boolean matches = UUID_PATTERN.matcher(uuidStr).matches();
+        if ( !matches )
+            error("Not a valid UUID string: "+uuidStr);
     }
 
     // ---- Scheme

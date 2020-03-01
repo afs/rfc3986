@@ -202,6 +202,16 @@ public class TestRFC3986 {
         testComponents("urn:local:abc/def#frag", "urn", null, "local:abc/def", null, "frag");
     }
 
+    @Test public void components_urn_uuid_1() {
+        testComponents("urn:uuid:06e775ac-2c38-11b2-801c-8086f2cc00c9",
+                "urn", null, "uuid:06e775ac-2c38-11b2-801c-8086f2cc00c9", null, null);
+    }
+
+    @Test public void components_uuid_1() {
+        testComponents("uuid:06e775ac-2c38-11b2-801c-8086f2cc00c9",
+                "uuid", null, "06e775ac-2c38-11b2-801c-8086f2cc00c9", null, null);
+    }
+
     // file:
     @Test public void components_file_1() {
         testComponents("file:///path/file.txt", "file", "", "/path/file.txt", null, null);
@@ -292,6 +302,36 @@ public class TestRFC3986 {
 
     // Bad by URN specific rule for the query components.
     @Test public void parse_urn_bad_09()    { badSpecific("urn:local:abc/def?query=foo"); }
+
+    @Test public void parse_urn_uuid_bad_01() {
+        badSpecific("urn:uuid:06e775ac-2c38-11b2-801c-8086f2cc00c9?query=foo");
+    }
+
+    @Test public void parse_urn_uuid_bad_02() {
+        badSpecific("urn:uuid:06e775ac-2c38-11b2-801c-8086f2cc00c9#frag");
+    }
+
+    @Test public void parse_urn_uuid_bad_03() {
+        // Bad length
+        badSpecific("urn:uuid:06e775ac");
+    }
+
+    @Test public void parse_urn_uuid_bad_04() {
+        // Bad character
+        badSpecific("urn:uuid:06e775ac-ZZZZ-11b2-801c-8086f2cc00c9");
+    }
+
+    @Test public void parse_uuid_bad_01() {
+        badSpecific("uuid:06e775ac-2c38-11b2-801c-8086f2cc00c9?query=foo");
+    }
+
+    @Test public void parse_uuid_bad_02() {
+        badSpecific("uuid:06e775ac-2c38-11b2-801c-8086f2cc00c9#frag");
+    }
+
+    @Test public void parse_uuid_bad_03() {
+        badSpecific("uuid:06e775ac-2c38-11b2");
+    }
 
     @Test public void equals_01()           {
         IRI3986 iri1 = IRI3986.create("http://example/");
