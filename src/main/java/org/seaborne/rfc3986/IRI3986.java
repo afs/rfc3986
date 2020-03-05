@@ -95,6 +95,7 @@ import java.util.regex.Pattern;
  */
 public class IRI3986 {
     // Grammars at the end of the file.
+
     // RFC 3986, RFC 3987 and teh definition of ABNF names (RFC 5234)
     /**
      * Determine if the string conforms to the IRI syntax. If not, it throws an exception.
@@ -1389,7 +1390,9 @@ public class IRI3986 {
 
    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
 
+   query         = *( pchar / "/" / "?" )
 
+   fragment      = *( pchar / "/" / "?" )
 
    pct-encoded   = "%" HEXDIG HEXDIG
 
@@ -1397,6 +1400,7 @@ public class IRI3986 {
    reserved      = gen-delims / sub-delims
    gen-delims    = ":" / "/" / "?" / "#" / "[" / "]" / "@"
    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
+                 / "*" / "+" / "," / ";" / "="
                  / "*" / "+" / "," / ";" / "="
 
   RFC 3897 : IRIs
