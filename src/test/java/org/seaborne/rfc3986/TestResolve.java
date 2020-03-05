@@ -111,6 +111,11 @@ public class TestResolve {
     }
 
     @Test
+    public void resolve_18() {
+        testResolve("http://example", "abc", "http://example/abc");
+    }
+
+    @Test
     public void resolve_20() {
         testResolve("http://example/dir/file", ".", "http://example/dir/");
     }
