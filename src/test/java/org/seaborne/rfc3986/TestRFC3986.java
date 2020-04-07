@@ -73,6 +73,14 @@ public class TestRFC3986 {
 
     @Test public void parse_15() { good("http://host?query"); }
 
+    // : in segment in path.
+    @Test public void parse_16() { good("http://host/a:b/"); }
+
+    @Test public void parse_17() { good("/a:b/"); }
+
+    @Test public void parse_18() { good("/z/a:b"); }
+
+
     @Test public void parse_file_01() { good("file:///file/name.txt"); }
 
     @Test public void parse_urn_01() { good("urn:x-local:abc/def"); }
@@ -249,6 +257,12 @@ public class TestRFC3986 {
     // Bad scheme
     @Test public void bad_scheme_5() { bad("aβ://host/xyz"); }
 
+    // Bad scheme
+    @Test public void bad_scheme_6() { bad("_:xyz"); }
+
+    // Bad scheme
+    @Test public void bad_scheme_7() { bad("a_b:xyz"); }
+
     // Space!
     @Test public void bad_chars_1() { bad("http://abcdef:80/xyz /abc"); }
 
@@ -385,9 +399,12 @@ public class TestRFC3986 {
     }
 
 
+    // Expect an IRIParseException
     private void bad(String string) {
-        try { RFC3986.check(string); }
-        catch (IRIParseException ex) {}
+        try {
+            RFC3986.check(string);
+            fail("Did not fail: "+string);
+        } catch (IRIParseException ex) {}
     }
 
     private void badSpecific(String string) {

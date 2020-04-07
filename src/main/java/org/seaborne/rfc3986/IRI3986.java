@@ -96,7 +96,7 @@ import java.util.regex.Pattern;
 public class IRI3986 {
     // Grammars at the end of the file.
 
-    // RFC 3986, RFC 3987 and teh definition of ABNF names (RFC 5234)
+    // RFC 3986, RFC 3987 and the definition of ABNF names (RFC 5234)
     /**
      * Determine if the string conforms to the IRI syntax. If not, it throws an exception.
      * This operation checks the string against the RFC3986/7 grammar; it does not apply
@@ -778,6 +778,21 @@ public class IRI3986 {
     //   Query string starts ?+ or ?=
 
     // Without rq-components and "#" f-component
+    // TODO check in RFC 8141, section 2.
+    /*
+        namestring    = assigned-name
+            [ rq-components ]
+            [ "#" f-component ]
+        assigned-name = "urn" ":" NID ":" NSS
+        NID           = (alphanum) 0*30(ldh) (alphanum)
+        ldh           = alphanum / "-"
+        NSS           = pchar *(pchar / "/")
+        rq-components = [ "?+" r-component ]
+                [ "?=" q-component ]
+        r-component   = pchar *( pchar / "/" / "?" )
+        q-component   = pchar *( pchar / "/" / "?" )
+        f-component   = fragment
+     */
     private static Pattern URN_PATTERN_ASSIGNED_NAME = Pattern.compile("^urn:([a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z]):.+");
 
     private void checkURN() {
@@ -845,24 +860,23 @@ public class IRI3986 {
 
     // ---- Scheme
 
+    //scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
     private int scheme(int start) {
         int p = start;
         int end = length;
         while (p < end) {
             char c = charAt(p);
-            if ( isAlpha(c) ) {}
-            else if ( c == ':' ) {
+            if ( c == ':' )
                 return p;
-            } else
-            {
-                if ( p > start ) {
-                    if ( isDigit(c) || c == '+' || c == '-' || c == '.' ) {}
-                    else {
-                        //bad.
-                        return -1;
-                    }
-                }
+            if ( ! isAlpha(c) ) {
+                if ( p == start )
+                    // Bad first character
+                    return -1;
+                if ( ! ( isDigit(c) || c == '+' || c == '-' || c == '.' ) )
+                    // Bad subsequent character
+                    return -1;
             }
+            // alpha
             p++;
         }
         // Did not find ':'
@@ -874,7 +888,7 @@ public class IRI3986 {
         // absolute-URI  = scheme ":" hier-part [ "?" query ]
         // hier-part     = "//" authority path-abempty
         int p = maybeAuthority(start);
-        return pathQueryFragment(p);
+        return pathQueryFragment(p, true);
     }
 
     private int withoutScheme(int start) {
@@ -889,7 +903,7 @@ public class IRI3986 {
         if ( ch == ':' )
             error("A URI without a scheme can't start with a ':'");
         int p = maybeAuthority(start);
-        return pathQueryFragment(p);
+        return pathQueryFragment(p, false);
     }
 
     // ---- Authority
@@ -1047,7 +1061,7 @@ public class IRI3986 {
 
     // ---- hier-part :: /path?query#fragment
 
-    private int pathQueryFragment(int start) {
+    private int pathQueryFragment(int start, boolean withScheme) {
         // hier-part [ "?" query ] [ "#" fragment ]
         // relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
 
@@ -1058,7 +1072,7 @@ public class IRI3986 {
         //               / path-empty
         // then [ "?" query ] [ "#" fragment ]
 
-        int x1 = path(start);
+        int x1 = path(start, withScheme);
 
         if ( x1 < 0 ) {
             x1 = start;
@@ -1073,7 +1087,8 @@ public class IRI3986 {
     }
 
     // ---- Path
-    private int path(int start) {
+    // If not withScheme, then segment-nz-nc applies.
+    private int path(int start, boolean withScheme) {
         // path          = path-abempty   ; begins with "/" or is empty
         //               / path-absolute  ; begins with "/" but not "//"
         //               / path-noscheme  ; begins with a non-colon segment
@@ -1092,14 +1107,18 @@ public class IRI3986 {
             return start;
         int segStart = start;
         int p = start;
+        boolean allowColon = withScheme;
 
         while (p < length ) {
             // skip segment-nz    = 1*pchar
             char ch = charAt(p);
             if ( isIPChar(ch, p) ) {
-                // OK
+                if ( ! allowColon && ch == ':' )
+                    // segment-nz-nc
+                    error(p+1, "':' in initial segment of a scheme-less IRI");
             } else {
                 // End segment.
+                allowColon = true;
                 segStart = p+1;
                 // Maybe new one.
                 if ( ch != '/') {
