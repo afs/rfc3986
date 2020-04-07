@@ -44,7 +44,7 @@ public interface IRIResolver
     /**
      * Resolve a relative URI against the base of this IRIResolver
      * or normalize an absolute URI.
-     * 
+     *
      * @param iri
      * @return the resolved IRI
      * @throws IRIParseException
@@ -55,14 +55,14 @@ public interface IRIResolver
     /**
      * Resolve a relative URI against the base of this IRIResolver
      * or normalize an absolute URI.
-     * 
+     *
      * @param iriStr
      * @return the resolved IRI
      * @throws IRIParseException
      *             If resulting URI would not be legal, absolute IRI
      */
     public default IRI3986 resolve(String iriStr) {
-        try { 
+        try {
             return resolve(RFC3986.create(iriStr));
         } catch (IRIParseException ex) {
             //throw new RiotException(ex.getMessage(), ex);
@@ -71,19 +71,19 @@ public interface IRIResolver
     }
 
     /**
-     * Create a URI, resolving relative IRIs, 
-     * normalize an absolute URI, 
+     * Create a URI, resolving relative IRIs,
+     * normalize an absolute URI,
      * but do not throw exception on a bad IRI.
-     * 
+     *
      * @param uriStr
      * @return the resolved IRI or null
      */
     public default IRI3986 resolveSilent(String uriStr) {
-        try { 
+        try {
             return resolve(uriStr);
         } catch (IRIParseException ex) { return null; }
     }
-    
+
 
     /** Resolving relative IRI, return a string */
     public default String resolveToString(String uriStr) {

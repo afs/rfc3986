@@ -80,7 +80,6 @@ public class TestRFC3986 {
 
     @Test public void parse_18() { good("/z/a:b"); }
 
-
     @Test public void parse_file_01() { good("file:///file/name.txt"); }
 
     @Test public void parse_urn_01() { good("urn:x-local:abc/def"); }

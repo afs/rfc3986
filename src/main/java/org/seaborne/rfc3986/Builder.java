@@ -29,7 +29,7 @@ public class Builder{
     private String query = null;
     private String fragment = null;
     /*package*/ Builder() {}
-    
+
     public String scheme() {
         return scheme;
     }

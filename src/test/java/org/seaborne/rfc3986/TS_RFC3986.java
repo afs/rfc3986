@@ -28,7 +28,7 @@ import org.junit.runners.Suite;
     TestNormalize.class,
     TestAddressIPv6.class,
     TestBuild.class
-    
+
 } )
 
 public class TS_RFC3986 { }

@@ -21,20 +21,20 @@ package org.seaborne.rfc3986;
 import java.util.regex.Pattern;
 
 /**
- * Implementation of RFC 3986 (URI), RFC 3987 (IRI). 
+ * Implementation of RFC 3986 (URI), RFC 3987 (IRI).
  * <p>
  * See the <a href="{@docRoot}/iri/package-summary.html">Package Overview</a>.
  * <p>
- * 
+ *
  * As is common, these are referred to
  * as "3986" regardless just as {@code java.net.URI} covers IRIs. {@code java.net.URI}
  * parses and allocates and follows RFC 2396 with modifications (several of which are in
  * RFC 3986).
- * 
+ *
  * This provides a fast checking operation which does not copy the various parts of the
  * IRI and which creates a single object. The cost of extracting and allocating strings
  * happen when the getter for the component is called.
- * 
+ *
  * Implements the algorithms specified in RFC 3986 operations for:
  * <ul>
  * <li>Checking a string matches the IRI grammar.
@@ -43,9 +43,9 @@ import java.util.regex.Pattern;
  * <li>Resolving an IRI against a base IRI.
  * <li>Rebuilding an IRI from components.
  * </ul>
- * 
+ *
  * <h3>Usage</h3>
- * 
+ *
  * <h4>Check</h4>
  * Check conformance with the RFC 3986 grammar:
  * <pre>
@@ -61,13 +61,13 @@ import java.util.regex.Pattern;
  *     iri.getPath();
  *     ...
  * </pre>
- * <h4>Resolve</h4> 
+ * <h4>Resolve</h4>
  * <pre>
  *     IRI3986 base = .RFC3986.create(baseIRIString);
  *     IRI3986 iri = RFC3986.create(string);
  *     IRI3986 iri2 = RFC3986.resolve(base);
  * </pre>
- * <h4>Normalize</h4> 
+ * <h4>Normalize</h4>
  * <pre>
  *     IRI3986 iri  = RFC3986.create(string);
  *     IRI3986 iri2 = RFC3986.normalize(iri);
@@ -83,7 +83,7 @@ public class RFC3986 {
     public static void check(String iristr) {
         IRI3986.check(iristr);
     }
-    
+
     /**
      * Determine if the string conforms to the IRI syntax. If not, it throws an exception.
      * This operation optionally also applies some scheme specific rules.
@@ -92,26 +92,26 @@ public class RFC3986 {
         IRI3986.check(iristr, applySchemeSpecificRules);
     }
 
-    /** 
+    /**
      * Determine if the string conforms to the IRI syntax.
      * If not, it throws an exception
      */
     public static IRI3986 create(String iristr) {
         return IRI3986.create(iristr);
     }
-    
-    /** Create an IRI builder */ 
+
+    /** Create an IRI builder */
     public static Builder create() {
         return new Builder();
     }
-    
-    /** Normalize an IRI (RFC 3986 - Syntax-Based Normalization) */ 
+
+    /** Normalize an IRI (RFC 3986 - Syntax-Based Normalization) */
     public static IRI3986 normalize(IRI3986 iri) { return iri.normalize(); }
-    
+
     /** Resolve an IRI against a base. */
     public static IRI3986 resolve(IRI3986 base, IRI3986 iri)   { return iri.resolve(base); }
-    
-    // From jena-iri - more groups. Breaks apart authority? 
+
+    // From jena-iri - more groups. Breaks apart authority?
     /*package*/ static final Pattern pMax = Pattern.compile("(([^:/?#]*):)?" + // scheme
         "(//((([^/?#@]*)@)?" + // user
         "(\\[[^/?#]*\\]|([^/?#:]*))?" + // host
@@ -119,7 +119,7 @@ public class RFC3986 {
         "([^#?]*)?" + // path
         "(\\?([^#]*))?" + // query
         "(#(.*))?"); // frag
-    
+
     /** RFC 3986 regular expression.
      * This assumes a well-formed URI reference; it will accept other mis-formed strings.
      * <ul>
@@ -136,11 +136,11 @@ public class RFC3986 {
      * <li>Group 6 : query, with '?'
      * <li>Group 8 : fragment,, with '#'
      * </ul>
-     * 
+     *
      * <pre>
      * "^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"
      *     12           3  4          5       6   7        8 9
-     * </pre> 
+     * </pre>
      * <ul>
      * <li>scheme    = $2
      * <li>authority = $4
@@ -222,7 +222,7 @@ public class RFC3986 {
 
    pchar         = unreserved / pct-encoded / sub-delims / ":" / "@"
 
-  
+
 
    pct-encoded   = "%" HEXDIG HEXDIG
 
@@ -232,13 +232,13 @@ public class RFC3986 {
    sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"
                  / "*" / "+" / "," / ";" / "="
   RFC 3897 : IRIs
-----  
-    NB "unreserved" used in  
+----
+    NB "unreserved" used in
     IPvFuture      = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-----  
-  
+----
+
    ipchar         = iunreserved / pct-encoded / sub-delims / ":" / "@"
-   
+
    iquery         = *( ipchar / iprivate / "/" / "?" )
 
    iunreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~" / ucschar
@@ -252,13 +252,13 @@ public class RFC3986 {
 
    iprivate       = %xE000-F8FF / %xF0000-FFFFD / %x100000-10FFFD
 
-   
+
             ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
             DIGIT          =  %x30-39             ; 0-9
 
-   
+
 ABNF core rules: RFC 5234
- 
+
          ALPHA          =  %x41-5A / %x61-7A   ; A-Z / a-z
 
          BIT            =  "0" / "1"

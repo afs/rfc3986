@@ -18,13 +18,13 @@
 
 package org.seaborne.rfc3986;
 
-/** Operations related to parsing IRIs */ 
+/** Operations related to parsing IRIs */
 /*package*/ class ParseLib {
 
     // Unicode - not a character
     /*package*/ static final char EOF = 0xFFFF;
-    
-    /** Test whether a character is in a charcater range (both ends inclusive) */ 
+
+    /** Test whether a character is in a charcater range (both ends inclusive) */
     public static boolean range(char ch, int start, int finish) {
         return ch >= start && ch <= finish;
     }
@@ -39,16 +39,16 @@ package org.seaborne.rfc3986;
 
     public static int hexValue(char ch) {
         if ( range(ch, '0', '9' ) ) return ch-'0';
-        if ( range(ch, 'A', 'F' ) ) return ch-'A'+10;  
+        if ( range(ch, 'A', 'F' ) ) return ch-'A'+10;
         if ( range(ch, 'a', 'f' ) ) return ch-'a'+10;
         return -1;
     }
-    
+
     private static int CASE_DIFF = 'a'-'A';     // 0x20.
     /* Check whether the character and the next character match the expected characters.
-     * ASCII only. 
+     * ASCII only.
      * chars should be lower case.
-     */  
+     */
     /*package*/ static boolean containsAtIgnoreCase(CharSequence string, int x, char[] chars) {
         // Avoid creating any objects.
         int n = string.length();
@@ -60,13 +60,13 @@ package org.seaborne.rfc3986;
             if ( ch == chx )
                 continue;
             if ( range(ch, 'a', 'z' ) && ( ch-chx == CASE_DIFF ) )
-                continue; 
+                continue;
             return false;
         }
         return true;
     }
 
-    /** Check whether the character and the next character match the expected characters. */  
+    /** Check whether the character and the next character match the expected characters. */
     public static boolean peekFor(CharSequence string, int x, char x1, char x2) {
         int n = string.length();
         if ( x+1 >= n )
@@ -75,20 +75,20 @@ package org.seaborne.rfc3986;
         char ch2 = string.charAt(x+1);
         return ch1 == x1 && ch2 == x2;
     }
-    
+
     public static char charAt(CharSequence string, int x) {
         if ( x >= string.length() )
             return EOF;
         return string.charAt(x);
     }
-    
+
     /** Return a display string for a character suitable for error messages. */
     public static String displayChar(char ch) {
         return String.format("%c (0x%04X)", ch, (int)ch);
     }
 
     // Copied from jena-base to make this package dependency-free.
-    /** Hex digits : upper case **/ 
+    /** Hex digits : upper case **/
     final private static char[] hexDigitsUC = {
         '0' , '1' , '2' , '3' , '4' , '5' , '6' , '7' , '8' ,
         '9' , 'A' , 'B' , 'C' , 'D' , 'E' , 'F' } ;

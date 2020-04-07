@@ -21,7 +21,7 @@ package org.seaborne.rfc3986;
 /**
  * An Error handler captures the policy for dealing with warnings, errors and
  * fatal errors. Fatal errors mean termination of processing and must throw
- * an exception. Errors and warnings may throw an exception to terminate 
+ * an exception. Errors and warnings may throw an exception to terminate
  * processing or may return after, for example, logging a message. The exact
  * policy is determined the error handler itself.
  */
@@ -30,7 +30,7 @@ public interface ErrorHandler
 {
     /** Report a warning */
     public default void warning(String message) { }
-    
+
     /** Report an error : Must not return (depends on error handler policy) */
     public void error(String message) ;
 }
