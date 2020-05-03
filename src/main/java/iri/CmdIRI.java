@@ -44,6 +44,12 @@ public class CmdIRI {
 
                 iri.checkSchemeSpecificRules();
 
+                System.out.printf("%s|%s|  ", "Scheme",     iri.getScheme());
+                System.out.printf("%s|%s|  ", "Authority",  iri.getAuthority());
+                System.out.printf("%s|%s|  ", "Path",       iri.getPath());
+                System.out.printf("%s|%s|  ", "Query",      iri.getQuery());
+                System.out.printf("%s|%s|  ", "Fragment",   iri.getFragment());
+                System.out.println();
             } catch (IRIParseException ex) {
                 System.err.println(ex.getMessage());
             }
