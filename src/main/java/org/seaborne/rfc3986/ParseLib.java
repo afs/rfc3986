@@ -24,8 +24,8 @@ package org.seaborne.rfc3986;
     // Unicode - not a character
     /*package*/ static final char EOF = 0xFFFF;
 
-    /** Test whether a character is in a charcater range (both ends inclusive) */
-    public static boolean range(char ch, int start, int finish) {
+    /** Test whether a character is in a character range (both ends inclusive) */
+    public static boolean range(int ch, int start, int finish) {
         return ch >= start && ch <= finish;
     }
 
@@ -45,9 +45,11 @@ package org.seaborne.rfc3986;
     }
 
     private static int CASE_DIFF = 'a'-'A';     // 0x20.
-    /* Check whether the character and the next character match the expected characters.
+    /*
+     * Case insensitive "startsWith".
+     * Check whether the character and the next character match the expected characters.
      * ASCII only.
-     * chars should be lower case.
+     * "chars" array  should be lower case.
      */
     /*package*/ static boolean containsAtIgnoreCase(CharSequence string, int x, char[] chars) {
         // Avoid creating any objects.

@@ -71,7 +71,6 @@ public class ParseIPv6Address {
         checkIPv6(string, 0, string.length());
     }
 
-
     public static void checkIPv6(CharSequence string, int start, int end) {
         int length = string.length();
         if ( start < 0 || end < 0 || end > length )
@@ -211,9 +210,6 @@ public class ParseIPv6Address {
                 else if ( h16c1+h16c2 > 5 )
                     throw new IRIParseException("Malformed IPv6 address [case 3]");
             }
-
-
-
             int x = ipv6_hex4(string, p, end);
             p = x;
             if ( p != end )

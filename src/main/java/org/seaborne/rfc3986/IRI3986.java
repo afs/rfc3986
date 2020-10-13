@@ -293,11 +293,10 @@ public class IRI3986 {
         return fragment;
     }
 
-
     /** <a href="https://tools.ietf.org/html/rfc3986#section-4.2">RFC 3986, Section 4.2</a> */
     public boolean isAbsolute() {
         // With scheme, without fragment
-        return scheme0 >= 0 && fragment0 < 0;
+        return hasScheme() && ! hasFragment();
     }
 
 //    public boolean isHierarchical() {
@@ -321,6 +320,7 @@ public class IRI3986 {
         if ( ! hasScheme() )
             // no scheme, no checks.
             return this;
+        // Avoid any object creation and also be case insensitive.
         if ( isScheme(HTTPchars) || isScheme(HTTPSchars) )
             checkHTTP();
         else if ( isScheme(FILEchars) )
@@ -774,11 +774,10 @@ public class IRI3986 {
     }
 
     // URN specific.
-    //   "urn", ASCII, min 2 char NID min one char  NSS (urn:NID:NSS)
+    //   "urn", ASCII, min 2 char NID min two char NSS (urn:NID:NSS)
     //   Query string starts ?+ or ?=
 
     // Without rq-components and "#" f-component
-    // TODO check in RFC 8141, section 2.
     /*
         namestring    = assigned-name
             [ rq-components ]
@@ -788,7 +787,7 @@ public class IRI3986 {
         ldh           = alphanum / "-"
         NSS           = pchar *(pchar / "/")
         rq-components = [ "?+" r-component ]
-                [ "?=" q-component ]
+                        [ "?=" q-component ]
         r-component   = pchar *( pchar / "/" / "?" )
         q-component   = pchar *( pchar / "/" / "?" )
         f-component   = fragment
@@ -801,7 +800,7 @@ public class IRI3986 {
             error("urn: scheme name is not lowercase 'urn'");
         boolean matches = URN_PATTERN_ASSIGNED_NAME.matcher(iriStr).matches();
         if ( !matches )
-            error("urn: does not match the assigned-name regular expession");
+            error("urn: does not match the 'assigned-name' regular expession (\"urn\" \":\" NID \":\" NSS)");
         if ( hasQuery() ) {
             String qs = getQuery();
             if ( ! qs.startsWith("+") && ! qs.startsWith("=") )
@@ -1127,7 +1126,8 @@ public class IRI3986 {
                     // ? or # else error
                     if ( ch == '?' || ch == '#' )
                         break;
-                    error(p+1, "not query or fragement: "+ch);
+                    // Not IPChar
+                    error(p+1, "bad character in IRI path: "+ch);
                 }
             }
             p++;
@@ -1141,9 +1141,11 @@ public class IRI3986 {
     }
 
     // ---- Query & Fragment
+
     private int query(int start) {
-        // query         = *( pchar / "/" / "?" )
-        int x = trailer('?', start);
+        // query      = *( pchar / "/" / "?" )
+        // iquery     = *( ipchar / iprivate / "/" / "?" )
+        int x = trailer('?', start, true);
 
         if ( x >= 0 && x != start ) {
             query0 = start+1;
@@ -1155,8 +1157,9 @@ public class IRI3986 {
     }
 
     private int fragment(int start) {
-        //fragment      = *( pchar / "/" / "?" )
-        int x = trailer('#', start);
+        // fragment      = *( pchar / "/" / "?" )
+        // ifragment     = *( ipchar / "/" / "?" )
+        int x = trailer('#', start, false);
         if ( x >= 0 && x != start ) {
             fragment0 = start+1;
             fragment1 = x;
@@ -1166,7 +1169,7 @@ public class IRI3986 {
         return x;
     }
 
-    private int trailer(char startChar, int start) {
+    private int trailer(char startChar, int start, boolean allowPrivate) {
         if ( start >= length )
             return -1;
         if ( charAt(start) != startChar )
@@ -1175,12 +1178,19 @@ public class IRI3986 {
         while(p < length ) {
             char ch = charAt(p);
             //System.out.println("    char="+ch);
-            if ( ! isIPChar(ch, p) && ch != '/' && ch != '?' )
-                // p is the index of the non-query char
-                return p;
+            if ( ! isIPChar(ch, p) && ch != '/' && ch != '?' ) {
+                // 3986 -> 3987 extra test
+                if ( ! allowPrivate )
+                    // p is the index of the non-query/fragment char
+                    return p;
+                // query string allows iPrivate
+                if ( ! isIPrivate(ch) )
+                    return p;
+            }
+            // Character OK for trailer.
             p++;
         }
-        return p; // =length.
+        return p; // = length if correct IRI.
     }
 
     private char charAt(int x) {
@@ -1194,7 +1204,7 @@ public class IRI3986 {
     // Unicode - not a character
     private static final char EOF = ParseLib.EOF;
 
-    // Is the character at location 'x' percent-encoded? Looks at next two characters.
+    // Is the character at location 'x' percent-encoded? Looks at next two characters if an only if ch is '%'
     private boolean isPctEncoded(char ch, int x) {
         if ( ch != '%' )
             return false;
@@ -1240,7 +1250,7 @@ public class IRI3986 {
     // Combining chars
 
     private static boolean isUcsChar(char ch) {
-        return range(ch, 0xA0, 0xDFF)  || range(ch, 0xF900, 0xFDCF)  || range(ch, 0xFDF, 0xFFEF)
+        return range(ch, 0xA0, 0xD7FF)  || range(ch, 0xF900, 0xFDCF)  || range(ch, 0xFDF0, 0xFFEF)
             // Java is 16 bits chars.
 //            || range(ch, 0x10000, 0x1FFFD) || range(ch, 0x20000, 0x2FFFD) || range(ch, 0x30000, 0x3FFFD)
 //            || range(ch, 0x40000, 0x4FFFD) || range(ch, 0x50000, 0x5FFFD) || range(ch, 0x60000, 0x6FFFD)
@@ -1250,12 +1260,39 @@ public class IRI3986 {
            ;
     }
 
+    // int version - includes support for beyond 16 bit chars.
+    private static boolean int_isUcsChar(int ch) {
+        // RFC 3987
+        // ucschar    = %xA0-D7FF / %xF900-FDCF / %xFDF0-FFEF
+        //            / %x10000-1FFFD / %x20000-2FFFD / %x30000-3FFFD
+        //            / %x40000-4FFFD / %x50000-5FFFD / %x60000-6FFFD
+        //            / %x70000-7FFFD / %x80000-8FFFD / %x90000-9FFFD
+        //            / %xA0000-AFFFD / %xB0000-BFFFD / %xC0000-CFFFD
+        //            / %xD0000-DFFFD / %xE1000-EFFFD
+        boolean b = range(ch, 0xA0, 0xD7FF)  || range(ch, 0xF900, 0xFDCF)  || range(ch, 0xFDF0, 0xFFEF);
+        if ( b )
+            return true;
+        if ( ch < 0x1000 )
+            return false;
+        // 32 bit checks.
+        return
+            range(ch, 0x10000, 0x1FFFD) || range(ch, 0x20000, 0x2FFFD) || range(ch, 0x30000, 0x3FFFD) ||
+            range(ch, 0x40000, 0x4FFFD) || range(ch, 0x50000, 0x5FFFD) || range(ch, 0x60000, 0x6FFFD) ||
+            range(ch, 0x70000, 0x7FFFD) || range(ch, 0x80000, 0x8FFFD) || range(ch, 0x90000, 0x9FFFD) ||
+            range(ch, 0xA0000, 0xAFFFD) || range(ch, 0xB0000, 0xBFFFD) || range(ch, 0xC0000, 0xCFFFD) ||
+            range(ch, 0xD0000, 0xDFFFD) || range(ch, 0xE1000, 0xEFFFD);
+    }
+
+
     //iprivate       = %xE000-F8FF / %xF0000-FFFFD / %x100000-10FFFD
     private static boolean isIPrivate(char ch) {
         return range(ch, 0xE000, 0xF8FF)
             // Java is 16 bits chars.
-            // ||  range(ch, 0xF0000, 0xFFFFD) || range(ch, 0x100000, 0X10FFFD)
            ;
+    }
+
+    private static boolean int_isIPrivate(int ch) {
+        return range(ch, 0xE000, 0xF8FF) || range(ch, 0xF0000, 0xFFFFD) || range(ch, 0x100000, 0X10FFFD);
     }
 
     private static boolean isDigit(char ch) {
@@ -1266,6 +1303,7 @@ public class IRI3986 {
 //  pct-encoded   = "%" HEXDIG HEXDIG
 //
 //  unreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~"
+//  iunreserved    = ALPHA / DIGIT / "-" / "." / "_" / "~" / ucschar
 //  reserved      = gen-delims / sub-delims
 //  gen-delims    = ":" / "/" / "?" / "#" / "[" / "]" / "@"
 //  sub-delims    = "!" / "$" / "&" / "'" / "(" / ")"

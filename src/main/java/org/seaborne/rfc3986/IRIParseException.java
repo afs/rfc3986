@@ -23,8 +23,12 @@ package org.seaborne.rfc3986;
  * @see IRI3986
  */
 public class IRIParseException extends RuntimeException {
-    public IRIParseException() { super(); }
+    // This is a signalling (alternative return) exception,
+    // not a programming error.
+
+    // Must gave a message.
     public IRIParseException(String message) {super(message); }
-    public IRIParseException(Throwable th) { super(th); }
-    public IRIParseException(String message, Throwable th) {super(message, th); }
+
+    // Where in the parser, the exception comes from is not relevant.
+    @Override public Throwable fillInStackTrace() { return this ; }
 }

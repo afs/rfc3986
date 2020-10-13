@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+/** Building IRIs from components. */
 public class TestBuild {
 
     @Test public void build_01() {
