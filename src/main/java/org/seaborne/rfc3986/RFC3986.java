@@ -111,16 +111,23 @@ public class RFC3986 {
     public static IRI3986 normalize(IRI3986 iri) { return iri.normalize(); }
 
     /** Resolve an IRI against a base. */
-    public static IRI3986 resolve(IRI3986 base, IRI3986 iri)   { return iri.resolve(base); }
+    public static IRI3986 resolve(IRI3986 base, IRI3986 iri) { return iri.resolve(base); }
 
-    // From jena-iri - more groups. Breaks apart authority?
-    /*package*/ static final Pattern pMax = Pattern.compile("(([^:/?#]*):)?" + // scheme
-        "(//((([^/?#@]*)@)?" + // user
-        "(\\[[^/?#]*\\]|([^/?#:]*))?" + // host
-        "(:([^/?#]*))?))?" + // port
-        "([^#?]*)?" + // path
-        "(\\?([^#]*))?" + // query
-        "(#(.*))?"); // frag
+    /**
+     * For a given base, return (if possible) an IRI that is relative to base.
+     * If input iri is relative, this is returned unchanged.
+     */
+    public static IRI3986 relativize(IRI3986 base, IRI3986 iri) { return base.relativize(iri); }
+
+    // Takes from jena-iri - more groups. Breaks apart authority.
+    /*package*/ static final String altRFC3986regex =
+             "(([^:/?#]*):)?" +               // scheme
+             "(//((([^/?#@]*)@)?" +           // user
+             "(\\[[^/?#]*\\]|([^/?#:]*))?" +  // host
+             "(:([^/?#]*))?))?" +             // port
+             "([^#?]*)?" +                    // path
+             "(\\?([^#]*))?" +                // query
+             "(#(.*))?";                      // frag
 
     /** RFC 3986 regular expression.
      * This assumes a well-formed URI reference; it will accept other mis-formed strings.
@@ -136,7 +143,7 @@ public class RFC3986 {
      * <li>Group 3 : authority with '//'
      * <li>Group 5 : path, with leading '/' if any.
      * <li>Group 6 : query, with '?'
-     * <li>Group 8 : fragment,, with '#'
+     * <li>Group 8 : fragment, with '#'
      * </ul>
      *
      * <pre>

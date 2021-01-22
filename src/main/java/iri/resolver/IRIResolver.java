@@ -27,13 +27,13 @@ import org.seaborne.rfc3986.RFC3986;
 public interface IRIResolver
 {
     /**
-     * The base of this IRIResolver.
+     * The base of this IRIResolver, returned as a string.
      */
-    public default String getBaseIRIasString() {
+    public default String getBase() {
         IRI3986 iri = getBaseIRI();
         if (iri == null)
             return null;
-        return iri.toString();
+        return iri.str();
     }
 
     /**
@@ -61,9 +61,9 @@ public interface IRIResolver
      * @throws IRIParseException
      *             If resulting URI would not be legal, absolute IRI
      */
-    public default IRI3986 resolve(String iriStr) {
+    public default String resolve(String iriStr) {
         try {
-            return resolve(RFC3986.create(iriStr));
+            return resolve(RFC3986.create(iriStr)).str();
         } catch (IRIParseException ex) {
             //throw new RiotException(ex.getMessage(), ex);
             throw ex;
@@ -71,22 +71,39 @@ public interface IRIResolver
     }
 
     /**
-     * Create a URI, resolving relative IRIs,
-     * normalize an absolute URI,
-     * but do not throw exception on a bad IRI.
-     *
-     * @param uriStr
-     * @return the resolved IRI or null
-     */
-    public default IRI3986 resolveSilent(String uriStr) {
-        try {
-            return resolve(uriStr);
-        } catch (IRIParseException ex) { return null; }
-    }
+     * Resolve an IRIs, including resolving a relative IRI,
+     * and return a string. Returns null for bad IRI string.
 
-
-    /** Resolving relative IRI, return a string */
+     * */
     public default String resolveToString(String uriStr) {
         return resolve(uriStr).toString();
     }
+//
+//    /**
+//     * Create a URI, resolving relative IRIs,
+//     * normalize an absolute URI,
+//     * but do not throw exception on a bad IRI.
+//     *
+//     * @param uriStr
+//     * @return the resolved IRI or null
+//     */
+//    public default IRI3986 resolveSilent(String uriStr) {
+//        try {
+//            return resolve(uriStr);
+//        } catch (IRIParseException ex) { return null; }
+//    }
+//
+//    /**
+//     * Create a URI, resolving relative IRIs,
+//     * normalize an absolute URI,
+//     * but do not throw exception on a bad IRI.
+//     *
+//     * @param uriStr
+//     * @return the resolved IRI or null
+//     */
+//    public default String resolveSilentToString(String uriStr) {
+//        try {
+//            IRI3986 iri = resolveSilent(uriStr);
+//        } catch (IRIParseException ex) { return null; }
+//    }
 }

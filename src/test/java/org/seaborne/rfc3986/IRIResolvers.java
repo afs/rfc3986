@@ -22,7 +22,7 @@ import org.apache.jena.iri.IRIFactory;
 import org.apache.jena.iri.ViolationCodes;
 
 // Copied from jena-arq. The Jena IRI settings.
-public class IRIResolvers {
+class IRIResolvers {
 
     public static IRIFactory iriFactory() { return iriFactoryInst; }
 

@@ -156,6 +156,10 @@ public class IRI3986 {
     private int authority1 = -1;
     private String authority = null;
 
+    private int userinfo0 = -1;
+    private int userinfo1 = -1;
+    private String userinfo = null;
+
     private int host0 = -1;
     private int host1 = -1;
     private String host = null;
@@ -249,6 +253,13 @@ public class IRI3986 {
         return authority;
     }
 
+    public boolean hasUserInfo() { return userinfo0 != -1 ; }
+    public String getUserInfo() {
+        if ( hasUserInfo() && userinfo == null)
+            userinfo = part(iriStr, userinfo0, userinfo1);
+        return userinfo;
+    }
+
     public boolean hasHost() { return host0 != -1 ; }
     public String getHost() {
         if ( hasHost() && host == null)
@@ -322,7 +333,7 @@ public class IRI3986 {
             return this;
         // Avoid any object creation and also be case insensitive.
         if ( isScheme(HTTPchars) || isScheme(HTTPSchars) )
-            checkHTTP();
+            checkHTTPx();
         else if ( isScheme(FILEchars) )
             checkFILE();
         else if ( isScheme(URN_UUIDchars) )
@@ -479,7 +490,7 @@ public class IRI3986 {
         return string.toLowerCase(Locale.ROOT);
     }
 
-    /** Resolve {@code this } using {@code baseIRI} as the base : 3986 section 5 */
+    /** Resolve {@code this} using {@code baseIRI} as the base : 3986 section 5 */
     public IRI3986 resolve(IRI3986 baseIRI) {
         // Base must have scheme. Be lax.
         return transformReferences(this, baseIRI);
@@ -820,7 +831,7 @@ public class IRI3986 {
         }
     }
 
-    private void checkHTTP() {
+    private void checkHTTPx() {
         if ( getAuthority().contains("@") )
             //Warning?
             error("userinfo (e.g. user:password) in authority section");
@@ -1012,14 +1023,11 @@ public class IRI3986 {
         authority0 = start;
         authority1 = p;
         int limit = p;
-        int userinfo0;
-        int userinfo1;
 
         if ( endUserInfo != -1 ) {
             userinfo0 = start;
             userinfo1 = endUserInfo;
             host0 = endUserInfo+1;
-            //String userinfo = input.substring(start, endUserInfo);
             if ( lastColon != -1 && lastColon < endUserInfo )
                 // Not port, part of userinfo - ignore.
                 lastColon = -1;
@@ -1193,6 +1201,7 @@ public class IRI3986 {
         return p; // = length if correct IRI.
     }
 
+    /** String.charAt except with an EOF character, not an exception. */
     private char charAt(int x) {
         if ( x >= length )
             return EOF;
