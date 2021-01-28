@@ -2,4 +2,6 @@
 
 H="$HOME/ASF/iri4ld"
 
-java -cp $H/target/classes iri.CmdIRI "$@"
+#java -cp $H/target/classes iri.CmdIRI "$@"
+java --module-path target/iri4ld-0.0.0-SNAPSHOT.jar \
+     --module org.seaborne.rfc3986/iri.CmdIRI "$@"
