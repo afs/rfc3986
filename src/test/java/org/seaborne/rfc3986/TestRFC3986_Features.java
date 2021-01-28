@@ -28,23 +28,56 @@ import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
 /**
- * Other tests of IRIs : parse and run methods.
+ * Other tests of IRIs : tests for features
  * @see TestNormalize
  * @see TestResolve
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
-public class TestRFC3986_Extra {
+public class TestRFC3986_Features {
 
     @Test public void absolute1() {
         isTrue("http://example/foo", IRI3986::isAbsolute);
     }
 
     @Test public void absolute2() {
+        // Fragment
         isFalse("http://example/foo#a", IRI3986::isAbsolute);
     }
 
     @Test public void absolute3() {
         isFalse("example/foo#a", IRI3986::isAbsolute);
+    }
+
+    @Test public void relative1() {
+        isFalse("http://example/foo", IRI3986::isRelative);
+    }
+
+    @Test public void relative2() {
+        isTrue("//example/foo#a", IRI3986::isRelative);
+    }
+
+    @Test public void relative3() {
+        isTrue("example", IRI3986::isRelative);
+    }
+
+    @Test public void relative4() {
+        isTrue("example/foo#a", IRI3986::isRelative);
+    }
+
+    @Test public void rootless1() {
+        isTrue("urn:ab:cde", IRI3986::isRootless);
+    }
+
+    @Test public void rootless2() {
+        isFalse("http://example/path", IRI3986::isRootless);
+    }
+
+    @Test public void hierarchical1() {
+        isTrue("http://example/path", IRI3986::isHierarchical);
+    }
+
+    @Test public void hierarchical2() {
+        isFalse("urn:ab:cde", IRI3986::isHierarchical);
     }
 
     @Test public void query1() {

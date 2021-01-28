@@ -46,6 +46,13 @@ class IRIResolvers {
         setErrorWarning(iriFactoryInst, ViolationCodes.UNDEFINED_UNICODE_CHARACTER, false, false);
         // So not dependent on JVM version
         setErrorWarning(iriFactoryInst, ViolationCodes.UNASSIGNED_UNICODE_CHARACTER, false, false);
+
+        // Don't see to switch-offable.
+//        setErrorWarning(iriFactoryInst, ViolationCodes.PERCENT_ENCODING_SHOULD_BE_UPPERCASE, false, true);
+//        setErrorWarning(iriFactoryInst, ViolationCodes.ILLEGAL_PERCENT_ENCODING, true, true);
+//        // URN: "urn:2+ chars:..."
+//        setErrorWarning(iriFactoryInst, ViolationCodes.SCHEME_PATTERN_MATCH_FAILED, false, false);
+
     }
 
     private static void setErrorWarning(IRIFactory factory, int code, boolean isError, boolean isWarning) {

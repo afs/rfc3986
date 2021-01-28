@@ -117,7 +117,7 @@ public class RFC3986 {
      * For a given base, return (if possible) an IRI that is relative to base.
      * If input iri is relative, this is returned unchanged.
      */
-    public static IRI3986 relativize(IRI3986 base, IRI3986 iri) { return base.relativize(iri); }
+    public static IRI3986 relativize(IRI3986 base, IRI3986 iri) { return iri.relativize(base); }
 
     // Takes from jena-iri - more groups. Breaks apart authority.
     /*package*/ static final String altRFC3986regex =

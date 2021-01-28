@@ -24,9 +24,10 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses( {
     TestRFC3986.class,
-    TestRFC3986_Extra.class,
+    TestRFC3986_Features.class,
     TestResolve.class,
     TestNormalize.class,
+    TestRelative.class,
     TestAddressIPv6.class,
     TestBuild.class
 

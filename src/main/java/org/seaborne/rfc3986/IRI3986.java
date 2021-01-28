@@ -19,9 +19,6 @@
 package org.seaborne.rfc3986;
 
 import static org.seaborne.rfc3986.ParseLib.*;
-import static org.seaborne.rfc3986.ParseLib.displayChar;
-import static org.seaborne.rfc3986.ParseLib.isHexDigit;
-import static org.seaborne.rfc3986.ParseLib.range;
 
 import java.text.Normalizer;
 import java.util.Locale;
@@ -304,16 +301,42 @@ public class IRI3986 {
         return fragment;
     }
 
-    /** <a href="https://tools.ietf.org/html/rfc3986#section-4.2">RFC 3986, Section 4.2</a> */
+    /** <a href="https://tools.ietf.org/html/rfc3986#section-4.3">RFC 3986, Section 4.3</a> */
     public boolean isAbsolute() {
         // With scheme, without fragment
         return hasScheme() && ! hasFragment();
     }
 
-//    public boolean isHierarchical() {
-//        ????
-//        return false;
-//    }
+    /** <a href="https://tools.ietf.org/html/rfc3986#section-4.2">RFC 3986, Section 4.2</a> */
+    public boolean isRelative() {
+        // No scheme.
+        // This is not "! isAbsolute()"
+        return ! hasScheme();
+    }
+
+    /**
+     * <a href="https://tools.ietf.org/html/rfc3986#section-3">RFC 3986, Section 3</a>.
+     * IRI has a scheme, no authority (no //) and is path-rootless (does not start with /)
+     * e.g. URN's.
+     */
+    public boolean isRootless() {
+        return hasScheme() && !hasAuthority() && rootlessPath();
+    }
+
+    /**
+     * <a href="https://tools.ietf.org/html/rfc3986#section-1.2.3">RFC 3986, Section 1.2.3 : Hierarchical Identifiers</a>.
+     */
+    public boolean isHierarchical() {
+        return hasScheme() && hasAuthority() && hierarchicalPath();
+    }
+
+    private boolean hierarchicalPath() {
+        return hasPath() && charAt(path0) == '/';
+    }
+
+    private boolean rootlessPath() {
+        return hasPath() && charAt(path0) != '/';
+    }
 
     private static char[] HTTPchars     = {'h', 't', 't', 'p', ':'};
     private static char[] HTTPSchars    = {'h', 't', 't', 'p', 's', ':'};
@@ -372,6 +395,7 @@ public class IRI3986 {
 
     /** Normalize : 3986 section 6.2.2.  Syntax-Based Normalization */
     public IRI3986 normalize() {
+        // Consider - a pass to c
         String scheme = getScheme();
         String authority = getAuthority();
         String path = getPath();
@@ -444,6 +468,14 @@ public class IRI3986 {
 //     6.2.4.  Protocol-Based Normalization
         // None.
 
+        // Rebuild.
+        if ( Objects.equals(scheme, getScheme()) && Objects.equals(authority, getAuthority()) &&
+             Objects.equals(path, getPath()) &&
+             Objects.equals(query, getQuery()) && Objects.equals(fragment, getFragment()) ) {
+            // No change and this has had all the elements calculated and substring done.
+            return this;
+        }
+
         String s = rebuild(scheme, authority, path, query, fragment);
         return new IRI3986(s).process();
     }
@@ -488,6 +520,71 @@ public class IRI3986 {
         if ( string == null )
             return null;
         return string.toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Return (if possible), an IRI that is relative to the base argument.
+     * If this IRI is a relative path, this is returned unchanged.
+     * <p>
+     * The base must have a scheme, have no fragment and no query string.
+     * Only the path name is made relative.
+     * <p>
+     * If no relative IRI can be found, return null.
+     */
+    public IRI3986 relativize(IRI3986 iri) {
+        // "this" is the base.
+        Objects.requireNonNull(iri);
+        if ( ! this.hasScheme() || this.hasQuery() || this.hasFragment() )
+            return null;
+        if ( ! iri.hasScheme() && !iri.hasAuthority() )
+            return null;
+        if ( ! Objects.equals(iri.getScheme(), this.getScheme()) )
+            return null;
+        if ( ! Objects.equals(iri.getAuthority(), this.getAuthority()) )
+            return null;
+//        if ( ! Objects.equals(base.getHost(), this.getHost()) )
+//            return null;
+//        if ( ! Objects.equals(base.getPort(), this.getPort()) )
+//            return null;
+
+        String basePath = this.getPath();
+        String targetPath = iri.getPath();
+        String relPath = relativePath(basePath, targetPath);
+        if ( relPath == null )
+            return null;
+        var relIRI = build(null, null, relPath, iri.getQuery(), iri.getFragment());
+        return relIRI;
+    }
+
+    /**
+     * Calculate a relative path so that "base" + relative path = "path". This is
+     * limited to the case where basePath is a prefix of path segments for the path
+     * to be made relative.
+     * <p>
+     * It is "same document", "child" relative, and does not
+     * return not "network" ("//host/a/c" or "/a/c" for same schema and host ) or
+     * parent ("../a/b/c") relative IRIs.
+     * <p>
+     */
+    private static String relativePath(String basePath, String path) {
+        int idx = basePath.lastIndexOf('/');
+        if ( idx < 0 )
+            return null;
+        // Include the "/"
+        String basePrefix = basePath.substring(0,idx);
+        if ( ! path.startsWith(basePrefix) )
+            return null;
+        String relPath = path.substring(idx+1);
+
+        // Initial segment has ':' ? A ':' before first '/'
+        int rColon = relPath.indexOf(':');
+        if ( rColon < 0 )
+            return relPath;
+        int rPathSep = relPath.indexOf('/');
+        if ( rPathSep < 0 || rColon < rPathSep )
+            // and so rPathSep != 0.
+            relPath = "./"+relPath;
+        return relPath;
     }
 
     /** Resolve {@code this} using {@code baseIRI} as the base : 3986 section 5 */
@@ -897,6 +994,10 @@ public class IRI3986 {
         // URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
         // absolute-URI  = scheme ":" hier-part [ "?" query ]
         // hier-part     = "//" authority path-abempty
+        //               / path-absolute
+        //               / path-rootless
+        //               / path-empty
+
         int p = maybeAuthority(start);
         return pathQueryFragment(p, true);
     }
