@@ -33,8 +33,6 @@ public class TestRFC3986 {
     // Assumes full authority parsing and not scheme-specific checks.
 
     // ---- Compare to jena-iri
-    // parser - and compare with jena-iri-full (the original jena-iri)
-    // jena-iri does not allow userinfo in http URIs (removed by HTTP RFC 2616 and later).
     @Test public void parse_00() { good("http://host"); }
 
     @Test public void parse_01() { good("http://host:8081/abc/def?qs=ghi#jkl"); }
@@ -80,7 +78,26 @@ public class TestRFC3986 {
 
     @Test public void parse_18() { good("/z/a:b"); }
 
+    // HTTP scheme specific rules.
+    @Test public void parse_http_01()   { badSpecific("http:///file/name.txt"); }
+
+    // HTTP scheme specific rules.
+    @Test public void parse_http_02()   { badSpecific("HTTP:///file/name.txt"); }
+
+    // This is treated as legal with path and no authority.
+    //@Test public void parse_http_02a()   { badSpecific("http:/file/name.txt"); }
+
+    @Test public void parse_http_03()   { badSpecific("http://users@host/file/name.txt"); }
+
+    @Test public void parse_http_04()   { good("nothttp://users@host/file/name.txt"); }
+
+    @Test public void parse_http_05()   { good("nothttp://users@/file/name.txt"); }
+
     @Test public void parse_file_01() { good("file:///file/name.txt"); }
+
+    @Test public void parse_file_02() { badSpecific("file://host/file/name.txt"); }
+
+    @Test public void parse_file_03() { badSpecific("file:/file/name.txt"); }
 
     @Test public void parse_urn_01() { good("urn:x-local:abc/def"); }
 
@@ -90,6 +107,8 @@ public class TestRFC3986 {
     @Test public void parse_urn_02()        { good("urn:x-local:abc/def?+more"); }
 
     @Test public void parse_urn_03()        { good("urn:x-local:abc/def?=123"); }
+
+    @Test public void parse_urn_04()        { good("urn:x-local:abc/def?+resolve?=123#frag"); }
 
     @Test public void parse_ftp_01() { good("ftp://user@host:3333/abc/def?qs=ghi#jkl"); }
 
@@ -381,7 +400,7 @@ public class TestRFC3986 {
         if ( true ) {
             IRI iri1 = IRIResolvers.iriFactory().create(string);
             if ( iri1.hasViolation(false) ) {
-                //iri1.violations(false).forEachRemaining(v-> System.err.println("IRI = "+string + " :: "+v.getLongMessage()));
+                iri1.violations(false).forEachRemaining(v-> System.err.println("IRI = "+string + " :: "+v.getLongMessage()));
                 fail("Violations "+string);
             }
         }
@@ -396,7 +415,6 @@ public class TestRFC3986 {
         IRI3986 iri = RFC3986.create(string);
         URI javaURI = URI.create(string);
     }
-
 
     // Expect an IRIParseException
     private void bad(String string) {

@@ -61,7 +61,7 @@ package org.seaborne.rfc3986;
             char chx = chars[i];
             if ( ch == chx )
                 continue;
-            if ( range(ch, 'a', 'z' ) && ( ch-chx == CASE_DIFF ) )
+            if ( range(ch, 'A', 'Z' ) && ( chx - ch == CASE_DIFF ) )
                 continue;
             return false;
         }

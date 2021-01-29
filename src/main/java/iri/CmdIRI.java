@@ -37,19 +37,26 @@ public class CmdIRI {
 
                 System.out.println(iriStr);
                 System.out.println("      ==> "+iri) ;
+//                System.out.println("Absolute: "+iri.isAbsolute());
+//                System.out.println("Relative: "+iri.isRelative());
+//                System.out.println("Hierarchical: "+iri.isHierarchical());
+//                System.out.println("Rootless: "+iri.isRootless());
                 if ( ! iri.equals(iri1) )
                     System.out.println("      ==> "+iri1) ;
-                if ( ! iri.isAbsolute() )
-                    System.out.println("Relative: "+!iri.isAbsolute()) ;
-
-                iri.checkSchemeSpecificRules();
 
                 System.out.printf("%s|%s|  ", "Scheme",     iri.getScheme());
                 System.out.printf("%s|%s|  ", "Authority",  iri.getAuthority());
                 System.out.printf("%s|%s|  ", "Path",       iri.getPath());
                 System.out.printf("%s|%s|  ", "Query",      iri.getQuery());
-                System.out.printf("%s|%s|  ", "Fragment",   iri.getFragment());
+                System.out.printf("%s|%s|", "Fragment",   iri.getFragment());
                 System.out.println();
+                try {
+                    iri.checkSchemeSpecificRules();
+                } catch (IRIParseException ex) {
+                    System.out.println();
+                    System.err.println("Scheme specific error:");
+                    System.err.println("    "+ex.getMessage());
+                }
             } catch (IRIParseException ex) {
                 System.err.println(ex.getMessage());
             }

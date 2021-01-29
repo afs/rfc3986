@@ -112,6 +112,11 @@ public class TestResolve {
 
     @Test
     public void resolve_18() {
+        testResolve("http://example/", "abc", "http://example/abc");
+    }
+
+    @Test
+    public void resolve_19() {
         testResolve("http://example", "abc", "http://example/abc");
     }
 
@@ -173,6 +178,16 @@ public class TestResolve {
     @Test
     public void resolve_31() {
         testResolve("http://example/path#fragment", "..#frag", "http://example/#frag");
+    }
+
+    @Test
+    public void resolve_32() {
+        testResolve("http://example/dir1/dir2/", "/OtherPath", "http://example/OtherPath");
+    }
+
+    @Test
+    public void resolve_33() {
+        testResolve("http://example/dir1/dir2/", "//EX/OtherPath", "http://EX/OtherPath");
     }
 
     private void testResolve(String base, String rel, String expected) {

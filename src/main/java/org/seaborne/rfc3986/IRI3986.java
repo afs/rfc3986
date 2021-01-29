@@ -54,12 +54,11 @@ import java.util.regex.Pattern;
  * <ul>
  * <li>Scheme specific rules for Linked Data usage of HTTP IRIs and URNs.
  * </ul>
- * HTTP IRIs forbid the "user@" part which is strongly discouraged in IRIs.<br/>
+ * HTTP IRIs forbids the "user@" part which is strongly discouraged in IRIs and requires a host name if the "//" is present.<br/>
  * Some additional check for RFC 8141 for URNs are included such as being of the form {@code urn:NID:NSS}.
  *
  * Restrictions and limitations:
  * <ul>
- * <li>Only Java characters supported (i.e. UTF16 16 bit characters)
  * <li>No normal form C checking when checking (currently) See {@link Normalizer#isNormalized(CharSequence, java.text.Normalizer.Form)}.
  * </ul>
  *
@@ -888,7 +887,6 @@ public class IRI3986 {
     //   "urn", ASCII, min 2 char NID min two char NSS (urn:NID:NSS)
     //   Query string starts ?+ or ?=
 
-    // Without rq-components and "#" f-component
     /*
         namestring    = assigned-name
             [ rq-components ]
@@ -903,6 +901,7 @@ public class IRI3986 {
         q-component   = pchar *( pchar / "/" / "?" )
         f-component   = fragment
      */
+    // Without specifically testing for rq-components and "#" f-component
     private static Pattern URN_PATTERN_ASSIGNED_NAME = Pattern.compile("^urn:([a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z]):.+");
 
     private void checkURN() {
@@ -932,8 +931,34 @@ public class IRI3986 {
     }
 
     private void checkHTTPx() {
-        if ( getAuthority().contains("@") )
-            //Warning?
+        /*
+         * https://tools.ietf.org/html/rfc7230#section-2.7.1
+         *
+         *   A sender MUST NOT generate an "http" URI with an empty host
+         *   identifier.  A recipient that processes such a URI reference MUST
+         *   reject it as invalid.
+         */
+        // See https://tools.ietf.org/html/rfc7230#section-2.7.1
+        if ( hasHost() && (host0 == host1) ) //getHost().isEmpty()
+            error("http and https URI scheme do not allow the host to be empty");
+
+        /*
+         * https://tools.ietf.org/html/rfc2616#section-3.2.2
+         *
+         *   http_URL = "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
+         *
+         * https://tools.ietf.org/html/rfc7230#section-2.7.1
+         *
+         *   A sender MUST NOT
+         *   generate the userinfo subcomponent (and its "@" delimiter) when an
+         *   "http" URI reference is generated within a message as a request
+         *   target or header field value.  Before making use of an "http" URI
+         *   reference received from an untrusted source, a recipient SHOULD parse
+         *   for userinfo and treat its presence as an error; it is likely being
+         *  used to obscure the authority for the sake of phishing attacks.
+         */
+
+        if ( hasUserInfo() ) // getAuthority().contains("@") )
             error("userinfo (e.g. user:password) in authority section");
     }
 
@@ -946,7 +971,6 @@ public class IRI3986 {
             error("file: URLs are of the form file:///path/...");
     }
 
-    // 06e775ac{8}-2c38-11b2-801c-8086f2cc00c9
     private static Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
     private void checkUUID(char[] scheme) {
         int idx = scheme.length;
@@ -954,10 +978,6 @@ public class IRI3986 {
         String uuidStr = iriStr.substring(idx);
         if ( uuidLen != 36 )
             error(String.valueOf(scheme)+" Bad UUID string (wrong length): "+uuidStr);
-//        // May be allow
-//        if ( uuidLen != 32 )
-//            error(String.valueOf(scheme)+": Bad UUID string: "+getPath());
-
         if ( hasQuery() )
             error(String.valueOf(scheme)+" does not allow a query string: "+iriStr);
         if ( hasFragment() )
@@ -1045,8 +1065,10 @@ public class IRI3986 {
      *
      * IP-literal    = "[" ( IPv6address / IPvFuture  ) "]"
      * IPvFuture     = "v" 1*HEXDIG "." 1*( unreserved / sub-delims / ":" )
-     * IPv6address   = hex and ":", and "." for IpV4 in IPv5.
+     * IPv6address   = hex and ":", and "." for IPv4 in IPv6.
      * IPv4address   = dec-octet "." dec-octet "." dec-octet "." dec-octet
+     *
+     * reg-name      = *( unreserved / pct-encoded / sub-delims )
      *
      * So the section is only
      * unreserved / pct-encoded / sub-delims / ":" / "@" / "[" / "]".
