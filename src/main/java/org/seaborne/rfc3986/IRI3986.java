@@ -18,6 +18,7 @@
 
 package org.seaborne.rfc3986;
 
+import static java.lang.String.format;
 import static org.seaborne.rfc3986.ParseLib.*;
 
 import java.text.Normalizer;
@@ -126,7 +127,7 @@ public class IRI3986 {
     private final String iriStr;
     private final int length;
 
-    private static ErrorHandler errorHandler = s-> { throw new IRIParseException(s);};
+    private static ErrorHandler errorHandler = s -> { throw new IRIParseException(s);};
 
     private static void error(int posn, String s) {
         if ( posn >= 0 )
@@ -271,6 +272,8 @@ public class IRI3986 {
         return port;
     }
 
+    // Should this be "true" because getPath returns at least ""?
+    // Rule path-abempty (or path-empty ) is "".
     public boolean hasPath() { return path0 != -1 ; }
     public String getPath() {
         if ( hasPath() && path == null)
@@ -1236,7 +1239,7 @@ public class IRI3986 {
                     if ( ch == '?' || ch == '#' )
                         break;
                     // Not IPChar
-                    error(p+1, "bad character in IRI path: "+ch);
+                    error(p+1, format("bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
                 }
             }
             p++;
@@ -1357,17 +1360,20 @@ public class IRI3986 {
 //                   / %xA0000-AFFFD / %xB0000-BFFFD / %xC0000-CFFFD
 //                   / %xD0000-DFFFD / %xE1000-EFFFD
 
-    // Combining chars
+    // Surrogates are "hi-lo" : DC000-DFFF and D800-DFFF
+    // We assume the java string is valid and surrogates are correctly in high-low pairs.
 
     private static boolean isUcsChar(char ch) {
         return range(ch, 0xA0, 0xD7FF)  || range(ch, 0xF900, 0xFDCF)  || range(ch, 0xFDF0, 0xFFEF)
+                // Allow surrogates.
+                || Character.isSurrogate(ch);
             // Java is 16 bits chars.
 //            || range(ch, 0x10000, 0x1FFFD) || range(ch, 0x20000, 0x2FFFD) || range(ch, 0x30000, 0x3FFFD)
 //            || range(ch, 0x40000, 0x4FFFD) || range(ch, 0x50000, 0x5FFFD) || range(ch, 0x60000, 0x6FFFD)
 //            || range(ch, 0x70000, 0x7FFFD) || range(ch, 0x80000, 0x8FFFD) || range(ch, 0x90000, 0x9FFFD)
 //            || range(ch, 0xA0000, 0xAFFFD) || range(ch, 0xB0000, 0xBFFFD) || range(ch, 0xC0000, 0xCFFFD)
 //            || range(ch, 0xD0000, 0xDFFFD) || range(ch, 0xE1000, 0xEFFFD)
-           ;
+
     }
 
     // int version - includes support for beyond 16 bit chars.
