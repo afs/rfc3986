@@ -58,7 +58,7 @@ public class TestRelative {
         IRI3986 result = base.relativize(path);
         assertEquals(rel, result);
         if ( rel != null ) {
-            IRI3986 path2 = rel.resolve(base);
+            IRI3986 path2 = base.resolve(rel);
             assertEquals(path, path2);
             assertEquals(path.toString(), path2.toString());
         }

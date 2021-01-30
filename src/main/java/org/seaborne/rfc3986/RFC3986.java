@@ -111,7 +111,7 @@ public class RFC3986 {
     public static IRI3986 normalize(IRI3986 iri) { return iri.normalize(); }
 
     /** Resolve an IRI against a base. */
-    public static IRI3986 resolve(IRI3986 base, IRI3986 iri) { return iri.resolve(base); }
+    public static IRI3986 resolve(IRI3986 base, IRI3986 iri) { return base.resolve(iri); }
 
     /**
      * For a given base, return (if possible) an IRI that is relative to base.

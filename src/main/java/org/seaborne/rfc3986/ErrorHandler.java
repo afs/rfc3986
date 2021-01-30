@@ -25,12 +25,12 @@ package org.seaborne.rfc3986;
  * processing or may return after, for example, logging a message. The exact
  * policy is determined the error handler itself.
  */
-
+@FunctionalInterface
 public interface ErrorHandler
 {
-    /** Report a warning */
+    /** Report a warning. This method may return. */
     public default void warning(String message) { }
 
-    /** Report an error : Must not return (depends on error handler policy) */
+    /** Report an error : Must not return (depends on error handler policy). */
     public void error(String message) ;
 }

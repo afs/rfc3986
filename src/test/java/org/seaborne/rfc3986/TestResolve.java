@@ -193,7 +193,7 @@ public class TestResolve {
     private void testResolve(String base, String rel, String expected) {
         IRI3986 baseiri = IRI3986.create(base);
         IRI3986 iri = IRI3986.create(rel);
-        IRI3986 iri2 = iri.resolve(baseiri);
+        IRI3986 iri2 = baseiri.resolve(iri);
         String s1 = iri2.toString();
         assertEquals(expected, s1);
         // Check the expected with jena-iri.

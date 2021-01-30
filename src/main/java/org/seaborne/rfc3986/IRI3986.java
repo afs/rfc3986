@@ -118,7 +118,7 @@ public class IRI3986 {
      * Determine if the string conforms to the IRI syntax.
      * If not, it throws an exception
      */
-    /*package*/ static IRI3986 create(String iristr) {
+    public static IRI3986 create(String iristr) {
         IRI3986 iri = new IRI3986(iristr).process();
         return iri;
     }
@@ -593,7 +593,7 @@ public class IRI3986 {
     private static IRI3986 transformReferences(IRI3986 reference, IRI3986 base) {
         // Base should be absolute
         String t_scheme = null;
-        String t_authority = null;
+        String t_authority = "";
         String t_path = "";
         String t_query = null;
         String t_fragment = null;
@@ -644,8 +644,9 @@ public class IRI3986 {
 //        T.fragment = R.fragment;
 
         // "not strict"
+        boolean sameScheme = Objects.equals(reference.getScheme(), base.getScheme());
 
-        if ( reference.hasScheme() ) {//|| ! Objects.equals(reference.getScheme(), base.getScheme()) ) {
+        if ( reference.hasScheme() && ! sameScheme ) {
             t_scheme = reference.getScheme();
             t_authority = reference.getAuthority();
             t_path = remove_dot_segments(reference.getPath());
@@ -676,6 +677,9 @@ public class IRI3986 {
             t_scheme = base.getScheme();
         }
         t_fragment = reference.getFragment();
+//        if ( t_authority == null ) {
+//            t_authority = "";
+//        }
         return RFC3986.create()
             .scheme(t_scheme).authority(t_authority).path(t_path).query(t_query).fragment(t_fragment)
             .build();

@@ -71,7 +71,7 @@ public class TestRFC3986 {
 
     @Test public void parse_15() { good("http://host?query"); }
 
-    // : in segment in path.
+    // : in first segment in path.
     @Test public void parse_16() { good("http://host/a:b/"); }
 
     @Test public void parse_17() { good("/a:b/"); }
