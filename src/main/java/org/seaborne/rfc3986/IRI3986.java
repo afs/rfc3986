@@ -20,6 +20,7 @@ package org.seaborne.rfc3986;
 
 import static java.lang.String.format;
 import static org.seaborne.rfc3986.ParseLib.*;
+import static org.seaborne.rfc3986.SystemIRI.*;
 
 import java.text.Normalizer;
 import java.util.Locale;
@@ -126,22 +127,6 @@ public class IRI3986 {
     private final String iriStr;
     private final int length;
 
-    private static ErrorHandler errorHandler = s -> { throw new IRIParseException(s);};
-
-    private static void error(int posn, String s) {
-        if ( posn >= 0 )
-            s = "[Posn "+posn+"] "+s;
-        error(s);
-    }
-
-    private static void error(String s) {
-        errorHandler.error(s);
-    }
-
-    public static void setErrorHandler(ErrorHandler errHandler) {
-        errorHandler = errHandler;
-    }
-
     // Offsets of parsed components, together with cached value.
     // The value is not calculated until first used, so that pure checking
     // not need to create any extra objects.
@@ -188,6 +173,7 @@ public class IRI3986 {
         return rebuild();
     }
 
+    /** Human-readable appearance. Use {@link #str()} to a string to use in code. */
     @Override
     public String toString() {
         // Human readable form - may be overridden.
@@ -219,7 +205,7 @@ public class IRI3986 {
             else
                 label = "path";
             //System.err.printf("(x3=%d, length=%d)\n", x, length);
-            error("Bad character in "+label+" component: "+displayChar(charAt(x)));
+            parseError("Bad character in "+label+" component: "+displayChar(charAt(x)));
         }
         return this;
     }
@@ -272,8 +258,15 @@ public class IRI3986 {
     }
 
     // Should this be "true" because getPath returns at least ""?
+    // not path0 != -1 ; }/
     // Rule path-abempty (or path-empty ) is "".
-    public boolean hasPath() { return path0 != -1 ; }
+    public boolean hasPath() {
+        // Not "path0 != -1"
+        // Rule path-abempty (or path-empty ) is "".
+        // There is alwas a path, it may be "".
+        return true;
+    }
+
     public String getPath() {
         if ( hasPath() && path == null)
             path = part(iriStr, path0, path1);
@@ -589,16 +582,16 @@ public class IRI3986 {
         return relPath;
     }
 
-    /** Resolve {@code this} using {@code baseIRI} as the base : 3986 section 5 */
-    public IRI3986 resolve(IRI3986 baseIRI) {
+    /** Resolve an IRI , useing this as the base. <a href=https://tools.ietf.org/html/rfc3986#section-5">RFC 3986 section 5</a> */
+    public IRI3986 resolve(IRI3986 other) {
+        //if ( ! hasScheme()() ) {}
         // Base must have scheme. Be lax.
-        return transformReferences(this, baseIRI);
+        return transformReferences(other, this);
     }
-
-    // Make absolute = resolve(Base)
 
     /** 5.2.2.  Transform References */
     private static IRI3986 transformReferences(IRI3986 reference, IRI3986 base) {
+        // Base should be absolute
         String t_scheme = null;
         String t_authority = null;
         String t_path = "";
@@ -650,7 +643,9 @@ public class IRI3986 {
 //
 //        T.fragment = R.fragment;
 
-        if ( reference.hasScheme() ) {
+        // "not strict"
+
+        if ( reference.hasScheme() ) {//|| ! Objects.equals(reference.getScheme(), base.getScheme()) ) {
             t_scheme = reference.getScheme();
             t_authority = reference.getAuthority();
             t_path = remove_dot_segments(reference.getPath());
@@ -907,14 +902,14 @@ public class IRI3986 {
     private void checkURN() {
         String scheme = getScheme();
         if ( ! scheme.equals("urn") )
-            error("urn: scheme name is not lowercase 'urn'");
+            schemeError("urn", "scheme name is not lowercase 'urn'");
         boolean matches = URN_PATTERN_ASSIGNED_NAME.matcher(iriStr).matches();
         if ( !matches )
-            error("urn: does not match the 'assigned-name' regular expession (\"urn\" \":\" NID \":\" NSS)");
+            schemeError("urn", "does not match the 'assigned-name' regular expession (\"urn\" \":\" NID \":\" NSS)");
         if ( hasQuery() ) {
             String qs = getQuery();
             if ( ! qs.startsWith("+") && ! qs.startsWith("=") )
-                error("urn: improper start to query string.");
+                schemeError("urn", "improper start to query string.");
             urnCharCheck("query", qs);
         }
 
@@ -926,7 +921,7 @@ public class IRI3986 {
         for ( int i = 0 ; i < string.length(); i++ ) {
             char ch = iriStr.charAt(i);
             if ( ch > 0x7F)
-                error("urn "+label+" : Non-ASCII character");
+                schemeError("urn", label+" : Non-ASCII character");
         }
     }
 
@@ -940,7 +935,7 @@ public class IRI3986 {
          */
         // See https://tools.ietf.org/html/rfc7230#section-2.7.1
         if ( hasHost() && (host0 == host1) ) //getHost().isEmpty()
-            error("http and https URI scheme do not allow the host to be empty");
+            schemeError("http", "http and https URI schemes do not allow the host to be empty");
 
         /*
          * https://tools.ietf.org/html/rfc2616#section-3.2.2
@@ -959,16 +954,16 @@ public class IRI3986 {
          */
 
         if ( hasUserInfo() ) // getAuthority().contains("@") )
-            error("userinfo (e.g. user:password) in authority section");
+            schemeError("http", "userinfo (e.g. user:password) in authority section");
     }
 
     private void checkFILE() {
         if ( ! hasAuthority() )
             // file:/path.
-            error("file: URLs are of the form file:///path/...");
+            schemeError("file", "file: URLs are of the form file:///path/...");
         if ( authority0 != authority1 )
             // file://path1/path2/..., so path becomes the "authority"
-            error("file: URLs are of the form file:///path/...");
+            schemeError("file", "file: URLs are of the form file:///path/...");
     }
 
     private static Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
@@ -977,15 +972,15 @@ public class IRI3986 {
         int uuidLen = iriStr.length()-scheme.length;
         String uuidStr = iriStr.substring(idx);
         if ( uuidLen != 36 )
-            error(String.valueOf(scheme)+" Bad UUID string (wrong length): "+uuidStr);
+            schemeError("uuid", "Bad UUID string (wrong length): "+uuidStr);
         if ( hasQuery() )
-            error(String.valueOf(scheme)+" does not allow a query string: "+iriStr);
+            schemeError("uuid", "query component not allowed: "+iriStr);
         if ( hasFragment() )
-            error(String.valueOf(scheme)+" does not allow a fragement: "+iriStr);
+            schemeError("uuid", "fragment not allowed: "+iriStr);
 
         boolean matches = UUID_PATTERN.matcher(uuidStr).matches();
         if ( !matches )
-            error("Not a valid UUID string: "+uuidStr);
+            schemeError("uuid", "Not a valid UUID string: "+uuidStr);
     }
 
     // ---- Scheme
@@ -1035,7 +1030,7 @@ public class IRI3986 {
         // Check not starting with ':' then path-noscheme is the same as path-rootless.
         char ch = charAt(start);
         if ( ch == ':' )
-            error("A URI without a scheme can't start with a ':'");
+            parseError("A URI without a scheme can't start with a ':'");
         int p = maybeAuthority(start);
         return pathQueryFragment(p, false);
     }
@@ -1102,15 +1097,15 @@ public class IRI3986 {
             } else if ( ch == '/' ) {
                 // Normal exit
                 if ( startIPv6 >= 0 && endIPv6 == -1)
-                    error(p+1, "Bad IPv6 address - No closing ']'");
+                    parseError(p+1, "Bad IPv6 address - No closing ']'");
                 break;
             } else if ( ch == '@' ) {
                 if ( endUserInfo != -1 )
-                    error(p+1, "Bad authority segment - multiple '@'");
+                    parseError(p+1, "Bad authority segment - multiple '@'");
                 // Found userinfo end; reset counts and trackers.
                 // Check for IPv6 []
                 if ( startIPv6 != -1 || endIPv6 != -1 )
-                    error(p+1, "Bad authority segment - contains '[' or ']'");
+                    parseError(p+1, "Bad authority segment - contains '[' or ']'");
                 endUserInfo = p;
                 // Reset port colon tracking.
                 countColon = 0;
@@ -1118,14 +1113,14 @@ public class IRI3986 {
             } else if ( ch == '[' ) {
                 // Still to check whether user authority
                 if ( startIPv6 >= 0 )
-                    error(p+1, "Bad IPv6 address - multiple '['");
+                    parseError(p+1, "Bad IPv6 address - multiple '['");
                 startIPv6 = p;
             } else if ( ch == ']' ) {
                 // Still to check whether user authority
                 if ( startIPv6 == -1 )
-                    error(p+1, "Bad IPv6 address - No '[' to match ']'");
+                    parseError(p+1, "Bad IPv6 address - No '[' to match ']'");
                 if ( endIPv6 >= 0 )
-                    error(p+1, "Bad IPv6 address - multiple ']'");
+                    parseError(p+1, "Bad IPv6 address - multiple ']'");
                 endIPv6 = p;
                 // Reset port colon tracking.
                 countColon = 0;
@@ -1139,7 +1134,7 @@ public class IRI3986 {
 
         if ( startIPv6 != -1 ) {
             if ( endIPv6 == -1 )
-                error("Bad IPv6 address - missing ']'");
+                parseError(startIPv6, "Bad IPv6 address - missing ']'");
             char ch1 = iriStr.charAt(startIPv6);
             char ch2 = iriStr.charAt(endIPv6);
             ParseIPv6Address.checkIPv6(iriStr, startIPv6, endIPv6+1);
@@ -1163,7 +1158,7 @@ public class IRI3986 {
 
         // Check only one ":" in host.
         if ( countColon > 1 )
-            error(-1, "Multiple ':' in host:port section");
+            parseError(-1, "Multiple ':' in host:port section");
 
         if ( lastColon != -1 ) {
             host1 = lastColon;
@@ -1178,7 +1173,7 @@ public class IRI3986 {
                 x++;
             }
             if ( x != port1 )
-                error(-1, "Bad port");
+                parseError(-1, "Bad port");
         } else
             host1 = limit;
 //        String u = part(input, endUserInfo==-1?-1:start, endUserInfo);
@@ -1248,7 +1243,7 @@ public class IRI3986 {
             if ( isIPChar(ch, p) ) {
                 if ( ! allowColon && ch == ':' )
                     // segment-nz-nc
-                    error(p+1, "':' in initial segment of a scheme-less IRI");
+                    parseError(p+1, "':' in initial segment of a scheme-less IRI");
             } else {
                 // End segment.
                 allowColon = true;
@@ -1256,12 +1251,12 @@ public class IRI3986 {
                 // Maybe new one.
                 if ( ch != '/') {
                     if ( ch == ' ' )
-                        error(p+1, "Space found in IRI");
+                        parseError(p+1, "Space found in IRI");
                     // ? or # else error
                     if ( ch == '?' || ch == '#' )
                         break;
                     // Not IPChar
-                    error(p+1, format("bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
+                    parseError(p+1, format("bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
                 }
             }
             p++;
@@ -1359,10 +1354,10 @@ public class IRI3986 {
 
     private static boolean percentCheck(int idx, char ch1, char ch2) {
         if ( ch1 == EOF || ch2 == EOF )
-            error(idx+1, "Incomplete %-encoded character");
+            parseError(idx+1, "Incomplete %-encoded character");
         if ( isHexDigit(ch1) && isHexDigit(ch2) )
             return true;
-        error(idx+1, "Bad %-encoded character ["+displayChar(ch1)+" "+displayChar(ch2)+"]");
+        parseError(idx+1, "Bad %-encoded character ["+displayChar(ch1)+" "+displayChar(ch2)+"]");
         return false;
     }
 
