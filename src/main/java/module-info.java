@@ -18,5 +18,5 @@
 
 module org.seaborne.rfc3986 {
     exports org.seaborne.rfc3986;
-    exports iri;
+    exports cmd.iri;
 }

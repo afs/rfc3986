@@ -18,7 +18,8 @@
 
 package org.seaborne.rfc3986;
 
-/** Runtime exception thrown when finding errors in an RFC 3986/7 IRI.
+/**
+ * Runtime exception thrown when finding errors in an RFC 3986/7 IRI.
  * @see RFC3986
  * @see IRI3986
  */

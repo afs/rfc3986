@@ -20,8 +20,6 @@ package org.seaborne.rfc3986;
 
 import static org.junit.Assert.*;
 
-import java.net.URI;
-
 import org.apache.jena.iri.IRI;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -95,9 +93,11 @@ public class TestRFC3986 {
 
     @Test public void parse_file_01() { good("file:///file/name.txt"); }
 
+    // We reject "file://host/" forms.
     @Test public void parse_file_02() { badSpecific("file://host/file/name.txt"); }
 
-    @Test public void parse_file_03() { badSpecific("file:/file/name.txt"); }
+    // This is legal by RFC 8089 (jena-iri, based on the original RFC 1738, fails this with missing authority).
+    @Test public void parse_file_03() { goodNoIRICheck("file:/file/name.txt"); }
 
     @Test public void parse_urn_01() { good("urn:x-local:abc/def"); }
 
@@ -405,7 +405,7 @@ public class TestRFC3986 {
             }
         }
         iri.checkSchemeSpecificRules();
-        URI javaURI = URI.create(string);
+        java.net.URI javaURI = java.net.URI.create(string);
         assertEquals(string, iri.rebuild());
         assertEquals(string, iri.str());
     }
@@ -413,7 +413,7 @@ public class TestRFC3986 {
     private void goodNoIRICheck(String string) {
         RFC3986.check(string);
         IRI3986 iri = RFC3986.create(string);
-        URI javaURI = URI.create(string);
+        java.net.URI javaURI = java.net.URI.create(string);
     }
 
     // Expect an IRIParseException

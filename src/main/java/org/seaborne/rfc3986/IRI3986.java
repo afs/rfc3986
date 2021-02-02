@@ -20,7 +20,8 @@ package org.seaborne.rfc3986;
 
 import static java.lang.String.format;
 import static org.seaborne.rfc3986.ParseLib.*;
-import static org.seaborne.rfc3986.SystemIRI.*;
+import static org.seaborne.rfc3986.SystemIRI3986.*;
+import static org.seaborne.rfc3986.SystemIRI3986.Compliance.*;
 
 import java.text.Normalizer;
 import java.util.Locale;
@@ -582,7 +583,7 @@ public class IRI3986 {
         return relPath;
     }
 
-    /** Resolve an IRI , useing this as the base. <a href=https://tools.ietf.org/html/rfc3986#section-5">RFC 3986 section 5</a> */
+    /** Resolve an IRI , using this as the base. <a href=https://tools.ietf.org/html/rfc3986#section-5">RFC 3986 section 5</a> */
     public IRI3986 resolve(IRI3986 other) {
         //if ( ! hasScheme()() ) {}
         // Base must have scheme. Be lax.
@@ -677,9 +678,6 @@ public class IRI3986 {
             t_scheme = base.getScheme();
         }
         t_fragment = reference.getFragment();
-//        if ( t_authority == null ) {
-//            t_authority = "";
-//        }
         return RFC3986.create()
             .scheme(t_scheme).authority(t_authority).path(t_path).query(t_query).fragment(t_fragment)
             .build();
@@ -901,15 +899,28 @@ public class IRI3986 {
         f-component   = fragment
      */
     // Without specifically testing for rq-components and "#" f-component
-    private static Pattern URN_PATTERN_ASSIGNED_NAME = Pattern.compile("^urn:([a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z]):.+");
+    // Strict - requires 2 char NID and one char NSS.
+    private static Pattern URN_PATTERN_ASSIGNED_NAME_STRICT = Pattern.compile("^urn:[a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z]:.+");
+
+    // More generous.
+    // NID, can be one char and can be "X"-" (RFC 2141)
+    // NSS, and it's colon can be absent. base names can be <urn:nid:> but not <urn:nid>
+    private static Pattern URN_PATTERN_ASSIGNED_NAME_LOOSE = Pattern.compile("^urn:[a-zA-Z0-9][-a-zA-Z0-9]{0,31}:(.*)");
 
     private void checkURN() {
+//        if ( URN_SCHEME == NOT_STRICT )
+//            return;
+
+        Pattern pattern = ( URN_SCHEME == STRICT ) ? URN_PATTERN_ASSIGNED_NAME_STRICT : URN_PATTERN_ASSIGNED_NAME_LOOSE;
+
         String scheme = getScheme();
         if ( ! scheme.equals("urn") )
             schemeError("urn", "scheme name is not lowercase 'urn'");
-        boolean matches = URN_PATTERN_ASSIGNED_NAME.matcher(iriStr).matches();
+        // Matched: anchored. (find() is not).
+        boolean matches = pattern.matcher(iriStr).matches();
+
         if ( !matches )
-            schemeError("urn", "does not match the 'assigned-name' regular expession (\"urn\" \":\" NID \":\" NSS)");
+            schemeError("urn", "does not match the 'assigned-name' rule regular expression (\"urn\" \":\" NID \":\" NSS)");
         if ( hasQuery() ) {
             String qs = getQuery();
             if ( ! qs.startsWith("+") && ! qs.startsWith("=") )
@@ -930,6 +941,8 @@ public class IRI3986 {
     }
 
     private void checkHTTPx() {
+        if ( ! hasAuthority() )
+            schemeError("http", "http and https URI schemes require //");
         /*
          * https://tools.ietf.org/html/rfc7230#section-2.7.1
          *
@@ -962,29 +975,31 @@ public class IRI3986 {
     }
 
     private void checkFILE() {
-        if ( ! hasAuthority() )
-            // file:/path.
-            schemeError("file", "file: URLs are of the form file:///path/...");
-        if ( authority0 != authority1 )
+        // We only support file:// because file://path1/path2/ makes the host "path1" (which is then ignored!)
+        if ( hasAuthority() && authority0 != authority1 ) {
             // file://path1/path2/..., so path becomes the "authority"
             schemeError("file", "file: URLs are of the form file:///path/...");
+        }
     }
 
+    /**
+     *  Both "urn:uuid:" and the unofficial "uuid:"
+     */
     private static Pattern UUID_PATTERN = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
     private void checkUUID(char[] scheme) {
         int idx = scheme.length;
         int uuidLen = iriStr.length()-scheme.length;
         String uuidStr = iriStr.substring(idx);
         if ( uuidLen != 36 )
-            schemeError("uuid", "Bad UUID string (wrong length): "+uuidStr);
+            schemeError(scheme, "Bad UUID string (wrong length): "+uuidStr);
         if ( hasQuery() )
-            schemeError("uuid", "query component not allowed: "+iriStr);
+            schemeError(scheme, "query component not allowed: "+iriStr);
         if ( hasFragment() )
-            schemeError("uuid", "fragment not allowed: "+iriStr);
+            schemeError(scheme, "fragment not allowed: "+iriStr);
 
         boolean matches = UUID_PATTERN.matcher(uuidStr).matches();
         if ( !matches )
-            schemeError("uuid", "Not a valid UUID string: "+uuidStr);
+            schemeError(String.valueOf(scheme), "Not a valid UUID string: "+uuidStr);
     }
 
     // ---- Scheme

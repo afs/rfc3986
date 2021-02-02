@@ -19,11 +19,17 @@
 package org.seaborne.rfc3986;
 
 /** Setup and configuration of the IRI3986 parser package. */
-public class SystemIRI {
+public class SystemIRI3986 {
+
+    public enum Compliance { STRICT, NOT_STRICT }
 
     public static void setErrorHandler(ErrorHandler errHandler) {
         errorHandler = errHandler;
     }
+
+    ///* package*/ static Compliance SCHEME_SPECIFIC          = Compliance.STRICT;
+    /* package*/ public static Compliance URN_SCHEME        = Compliance.STRICT;
+    /* package*/ public static Compliance FILE_SCHEME       = Compliance.STRICT;
 
     // Default!
     private static ErrorHandler errorHandler = s -> { throw new IRIParseException(s);};
@@ -37,6 +43,11 @@ public class SystemIRI {
     static void parseError(String s) {
         error(s);
     }
+
+    static void schemeError(char[] scheme, String s) {
+        schemeError(String.copyValueOf(scheme), s);
+    }
+
 
     static void schemeError(String scheme, String s) {
         error(scheme+" URI scheme -- "+s);
