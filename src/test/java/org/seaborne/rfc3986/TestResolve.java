@@ -197,7 +197,7 @@ public class TestResolve {
         String s1 = iri2.toString();
         assertEquals(expected, s1);
         // Check the expected with jena-iri.
-        IRI baseJenaIRI = IRIResolvers.iriFactory().create(base);
+        IRI baseJenaIRI = JenaIRI.iriFactory().create(base);
         IRI resolvedJenaIRI = baseJenaIRI.resolve(rel);
 
         String s2 = resolvedJenaIRI.toString();

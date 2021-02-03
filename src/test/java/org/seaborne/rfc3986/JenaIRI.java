@@ -22,7 +22,7 @@ import org.apache.jena.iri.IRIFactory;
 import org.apache.jena.iri.ViolationCodes;
 
 // Copied from jena-arq. The Jena IRI settings.
-class IRIResolvers {
+class JenaIRI {
 
     public static IRIFactory iriFactory() { return iriFactoryInst; }
 
@@ -36,23 +36,18 @@ class IRIResolvers {
         // Allow relative references for file: URLs.
         iriFactoryInst.setSameSchemeRelativeReferences("file");
 
-        // Jena 3.14.0 setup. See IRIResolver.
         // Accept any scheme.
+        // Jena settings (strict mode).
         setErrorWarning(iriFactoryInst, ViolationCodes.UNREGISTERED_IANA_SCHEME, false, false);
 
         setErrorWarning(iriFactoryInst, ViolationCodes.NON_INITIAL_DOT_SEGMENT, false, false);
         setErrorWarning(iriFactoryInst, ViolationCodes.NOT_NFKC, false, false);
         setErrorWarning(iriFactoryInst, ViolationCodes.COMPATIBILITY_CHARACTER, false, false);
+        setErrorWarning(iriFactoryInst, ViolationCodes.REQUIRED_COMPONENT_MISSING, true, true);
+
         setErrorWarning(iriFactoryInst, ViolationCodes.UNDEFINED_UNICODE_CHARACTER, false, false);
-        // So not dependent on JVM version
+        // So not dependent on JVM/Unicode version
         setErrorWarning(iriFactoryInst, ViolationCodes.UNASSIGNED_UNICODE_CHARACTER, false, false);
-
-        // Don't see to switch-offable.
-//        setErrorWarning(iriFactoryInst, ViolationCodes.PERCENT_ENCODING_SHOULD_BE_UPPERCASE, false, true);
-//        setErrorWarning(iriFactoryInst, ViolationCodes.ILLEGAL_PERCENT_ENCODING, true, true);
-//        // URN: "urn:2+ chars:..."
-//        setErrorWarning(iriFactoryInst, ViolationCodes.SCHEME_PATTERN_MATCH_FAILED, false, false);
-
     }
 
     private static void setErrorWarning(IRIFactory factory, int code, boolean isError, boolean isWarning) {

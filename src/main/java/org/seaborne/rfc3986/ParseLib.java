@@ -44,12 +44,12 @@ package org.seaborne.rfc3986;
         return -1;
     }
 
-    private static int CASE_DIFF = 'a'-'A';     // 0x20.
+    private static int CASE_DIFF = 'a'-'A';     // 0x20. Only for ASCII.
     /*
-     * Case insensitive "startsWith".
+     * Case insensitive "startsWith" for ASCII.
      * Check whether the character and the next character match the expected characters.
-     * ASCII only.
      * "chars" array  should be lower case.
+     *     scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
      */
     /*package*/ static boolean containsAtIgnoreCase(CharSequence string, int x, char[] chars) {
         // Avoid creating any objects.
@@ -61,6 +61,7 @@ package org.seaborne.rfc3986;
             char chx = chars[i];
             if ( ch == chx )
                 continue;
+            // URI scheme names are ASCII.
             if ( range(ch, 'A', 'Z' ) && ( chx - ch == CASE_DIFF ) )
                 continue;
             return false;

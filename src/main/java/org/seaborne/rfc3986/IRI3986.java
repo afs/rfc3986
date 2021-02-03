@@ -112,12 +112,14 @@ public class IRI3986 {
     /*package*/ static void check(String iristr, boolean applySchemeSpecificRules) {
         IRI3986 iri = new IRI3986(iristr).process();
         if ( applySchemeSpecificRules )
-            iri.checkSchemeSpecificRules();
+            iri.schemeSpecificRules();
     }
 
     /**
      * Determine if the string conforms to the IRI syntax.
-     * If not, it throws an exception
+     * If not, it throws an exception.
+     * This operations does not check the resulting IRI conforms to
+     * URI scheme specific rules-- see {@link #schemeSpecificRules()}.
      */
     public static IRI3986 create(String iristr) {
         IRI3986 iri = new IRI3986(iristr).process();
@@ -334,18 +336,22 @@ public class IRI3986 {
         return hasPath() && charAt(path0) != '/';
     }
 
-    private static char[] HTTPchars     = {'h', 't', 't', 'p', ':'};
-    private static char[] HTTPSchars    = {'h', 't', 't', 'p', 's', ':'};
-    private static char[] URNchars      = {'u', 'r', 'n', ':'};
-    private static char[] URN_UUIDchars = {'u', 'r', 'n', ':', 'u', 'u', 'i', 'd', ':'};
+    // Scheme names, include ':' as the terminator.
+    private static char[] HTTPchars     = "http:".toCharArray();
+    private static char[] HTTPSchars    = "https:".toCharArray();
+    private static char[] URNchars      = "urn:".toCharArray();
+    private static char[] URN_UUIDchars = "urn:uuid:".toCharArray();
     // It's not officially registered but may be found in the wild.
-    private static char[] UUIDchars     = {'u', 'u', 'i', 'd', ':'};
-    private static char[] FILEchars     = {'f', 'i', 'l', 'e', ':'};
+    private static char[] UUIDchars     = "uuid:".toCharArray();
+    private static char[] FILEchars     = "file:".toCharArray();
 
     private boolean isScheme(char[] schemeChars) { return containsAtIgnoreCase(iriStr, 0, schemeChars); }
 
-    /** Apply scheme specific rules */
-    public IRI3986 checkSchemeSpecificRules() {
+    /**
+     * Apply scheme specific rules.
+     * Return 'this' if there are no violations.
+     */
+    public IRI3986 schemeSpecificRules() {
         // No internal objects created.
         if ( ! hasScheme() )
             // no scheme, no checks.

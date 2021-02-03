@@ -96,7 +96,7 @@ public class RFC3986 {
      * Parse the string in accordance with the general IRI grammar.
      * If not, it throws an exception.
      * <p>
-     * This does not include schema-specific validation : see {@link IRI3986#checkSchemeSpecificRules()}.
+     * This does not include schema-specific validation : see {@link IRI3986#schemeSpecificRules()}.
      */
     public static IRI3986 create(String iristr) {
         return IRI3986.create(iristr);

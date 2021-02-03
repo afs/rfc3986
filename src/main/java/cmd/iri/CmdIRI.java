@@ -51,7 +51,7 @@ public class CmdIRI {
                 System.out.printf("%s|%s|", "Fragment",   iri.getFragment());
                 System.out.println();
                 try {
-                    iri.checkSchemeSpecificRules();
+                    iri.schemeSpecificRules();
                 } catch (IRIParseException ex) {
                     System.out.println();
                     System.err.println("Scheme specific error:");

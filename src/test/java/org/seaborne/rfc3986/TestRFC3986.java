@@ -398,13 +398,13 @@ public class TestRFC3986 {
         RFC3986.check(string);
         IRI3986 iri = RFC3986.create(string);
         if ( true ) {
-            IRI iri1 = IRIResolvers.iriFactory().create(string);
-            if ( iri1.hasViolation(false) ) {
-                iri1.violations(false).forEachRemaining(v-> System.err.println("IRI = "+string + " :: "+v.getLongMessage()));
+            IRI iri1 = JenaIRI.iriFactory().create(string);
+            if ( iri1.hasViolation(true) ) {
+                iri1.violations(true).forEachRemaining(v-> System.err.println("IRI = "+string + " :: "+v.getLongMessage()));
                 fail("Violations "+string);
             }
         }
-        iri.checkSchemeSpecificRules();
+        iri.schemeSpecificRules();
         java.net.URI javaURI = java.net.URI.create(string);
         assertEquals(string, iri.rebuild());
         assertEquals(string, iri.str());
@@ -428,7 +428,7 @@ public class TestRFC3986 {
         RFC3986.check(string);
         try {
             RFC3986.create(string)
-                .checkSchemeSpecificRules();
+                .schemeSpecificRules();
             fail("Expected a parse exception: '"+string+"'");
         } catch (IRIParseException ex) {}
     }
