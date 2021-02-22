@@ -42,13 +42,19 @@ public class TestRelative {
     public void relative_06() { testRelative("http://ex/path/?query", "http://ex/path/file", null); }
 
     @Test
-    public void relative_07() { testRelative("http://ex/path/#frag", "http://ex/path/file", null); }
+    public void relative_07() { testRelative("http://ex/path/#frag", "http://ex/path/file", "file"); }
 
     @Test
     public void relative_08() { testRelative("http://ex/path/", "http://ex/path/file?q=x", "file?q=x"); }
 
     @Test
     public void relative_09() { testRelative("http://ex/path/", "http://ex/path/file#frag", "file#frag"); }
+
+    @Test
+    public void relative_10() { testRelative("http://example/ns#", "http://example/x", "x") ; }
+
+    @Test
+    public void relative_11() { testRelative("http://example/ns#", "http://example/ns#x", "#x") ; }
 
     private void testRelative(String baseStr, String pathStr, String relStr) {
         IRI3986 base = IRI3986.create(baseStr);

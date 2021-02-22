@@ -110,6 +110,8 @@ public class TestRFC3986 {
 
     @Test public void parse_urn_04()        { good("urn:x-local:abc/def?+resolve?=123#frag"); }
 
+    @Test public void parse_urn_05()        { good("urn:abc0:def"); }
+
     @Test public void parse_ftp_01() { good("ftp://user@host:3333/abc/def?qs=ghi#jkl"); }
 
     @Test public void parse_ftp_02() { good("ftp://[::1]/abc/def?qs=ghi#jkl"); }
@@ -184,12 +186,11 @@ public class TestRFC3986 {
     @Test public void parse_urn_bad_02() { badSpecific("urn:x:abc"); }
 
     @Test public void parse_urn_bad_03() { badSpecific("urn:abc:"); }
-    @Test public void parse_urn_bad_04() { badSpecific("urn:abc0:def"); }
     // 33 chars
-    @Test public void parse_urn_bad_05() { badSpecific("urn:abcdefghij-123456789-123456789-yz:a"); }
+    @Test public void parse_urn_bad_04() { badSpecific("urn:abcdefghij-123456789-123456789-yz:a"); }
 
     // Bad by URN specific rule for the query components.
-    @Test public void parse_urn_bad_09()    { badSpecific("urn:local:abc/def?query=foo"); }
+    @Test public void parse_urn_bad_05() { badSpecific("urn:local:abc/def?query=foo"); }
 
     @Test public void parse_urn_uuid_bad_01() {
         badSpecific("urn:uuid:06e775ac-2c38-11b2-801c-8086f2cc00c9?query=foo");

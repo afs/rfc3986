@@ -535,7 +535,7 @@ public class IRI3986 {
     public IRI3986 relativize(IRI3986 iri) {
         // "this" is the base.
         Objects.requireNonNull(iri);
-        if ( ! this.hasScheme() || this.hasQuery() || this.hasFragment() )
+        if ( ! this.hasScheme() || this.hasQuery() )
             return null;
         if ( ! iri.hasScheme() && !iri.hasAuthority() )
             return null;
@@ -917,7 +917,7 @@ public class IRI3986 {
      */
     // Without specifically testing for rq-components and "#" f-component
     // Strict - requires 2 char NID and one char NSS.
-    private static Pattern URN_PATTERN_ASSIGNED_NAME_STRICT = Pattern.compile("^urn:[a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z]:.+");
+    private static Pattern URN_PATTERN_ASSIGNED_NAME_STRICT = Pattern.compile("^urn:[a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z0-9]:.+");
 
     // More generous.
     // NID, can be one char and can be "X"-" (RFC 2141)
