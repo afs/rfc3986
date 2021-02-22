@@ -529,7 +529,6 @@ public class IRI3986 {
      * If this IRI is a relative path, this is returned unchanged.
      * <p>
      * The base must have a scheme, have no fragment and no query string.
-     * Only the path name is made relative.
      * <p>
      * If no relative IRI can be found, return null.
      */
@@ -551,7 +550,15 @@ public class IRI3986 {
 
         String basePath = this.getPath();
         String targetPath = iri.getPath();
+
+        if ( basePath.equals(targetPath) &&
+                ( iri.hasFragment() || iri.hasQuery() ) ) {
+            var relIRI = build(null, null, "", iri.getQuery(), iri.getFragment());
+            return relIRI;
+        }
+
         String relPath = relativePath(basePath, targetPath);
+
         if ( relPath == null )
             return null;
         var relIRI = build(null, null, relPath, iri.getQuery(), iri.getFragment());
@@ -559,9 +566,11 @@ public class IRI3986 {
     }
 
     /**
-     * Calculate a relative path so that "base" + relative path = "path". This is
+     * Calculate a relative path so that resolve("base", relative path) = "path". This is
      * limited to the case where basePath is a prefix of path segments for the path
      * to be made relative.
+     * <p>
+     * If basePath == path, return "".
      * <p>
      * It is "same document", "child" relative, and does not
      * return not "network" ("//host/a/c" or "/a/c" for same schema and host ) or
@@ -569,6 +578,8 @@ public class IRI3986 {
      * <p>
      */
     private static String relativePath(String basePath, String path) {
+        if ( basePath.equals(path) )
+            return "";
         int idx = basePath.lastIndexOf('/');
         if ( idx < 0 )
             return null;

@@ -44,16 +44,37 @@ public class SystemIRI3986 {
         error(s);
     }
 
+    static void parseWarning(int posn, String s) {
+        if ( posn >= 0 )
+            s = "[Posn "+posn+"] "+s;
+        warning(s);
+    }
+
+    static void parseWarning(String s) {
+        warning(s);
+    }
+
     static void schemeError(char[] scheme, String s) {
         schemeError(String.copyValueOf(scheme), s);
     }
-
 
     static void schemeError(String scheme, String s) {
         error(scheme+" URI scheme -- "+s);
     }
 
+    static void schemeWarning(char[] scheme, String s) {
+        schemeError(String.copyValueOf(scheme), s);
+    }
+
+    static void schemeWarning(String scheme, String s) {
+        warning(scheme+" URI scheme -- "+s);
+    }
+
     private static void error(String s) {
         errorHandler.error(s);
+    }
+
+    private static void warning(String s) {
+        errorHandler.warning(s);
     }
 }
