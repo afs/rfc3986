@@ -28,8 +28,36 @@ public class SystemIRI3986 {
     }
 
     ///* package*/ static Compliance SCHEME_SPECIFIC          = Compliance.STRICT;
-    /* package*/ public static Compliance URN_SCHEME        = Compliance.STRICT;
-    /* package*/ public static Compliance FILE_SCHEME       = Compliance.STRICT;
+    /* package*/ static Compliance HTTPx_SCHEME      = Compliance.STRICT;
+    /* package*/ static Compliance URN_SCHEME        = Compliance.STRICT;
+    /* package*/ static Compliance FILE_SCHEME       = Compliance.STRICT;
+
+    public static void strictMode(String scheme, Compliance compliance) {
+        switch (scheme) {
+            case "http" :
+                SystemIRI3986.HTTPx_SCHEME = compliance;
+                break;
+            case "urn" :
+                SystemIRI3986.URN_SCHEME = compliance;
+                break;
+            case "file" :
+                SystemIRI3986.FILE_SCHEME = compliance;
+                break;
+        }
+    }
+
+    public static Compliance getStrictMode(String scheme) {
+        switch (scheme) {
+            case "http" :
+                return SystemIRI3986.HTTPx_SCHEME;
+            case "urn" :
+                return SystemIRI3986.URN_SCHEME;
+            case "file" :
+                return SystemIRI3986.FILE_SCHEME;
+            default:
+                return SystemIRI3986.Compliance.NOT_STRICT;
+        }
+    }
 
     // Default!
     private static ErrorHandler errorHandler = s -> { throw new IRIParseException(s);};

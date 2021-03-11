@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package cmd.iri.resolver;
+package dev;
 
 
 import org.seaborne.rfc3986.IRI3986;

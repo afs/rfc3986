@@ -37,7 +37,6 @@ public class TestRFC3986 {
 
     @Test public void parse_02() { good("http://[::1]:8080/abc/def?qs=ghi#jkl"); }
 
-    // jena-iri does not allow %XX in the authority. It originated pre-3986 and does not seem to have updated completely.
     // %XX in host added at RFC 3986.
     @Test public void parse_03() { goodNoIRICheck("http://ab%AAdef/xyzβ/abc"); }
 
@@ -45,8 +44,7 @@ public class TestRFC3986 {
 
     @Test public void parse_05() { good("/ab%FFdef"); }
 
-    // jena-iri mandates upper case.  The RFC 3986 grammar only has upper case but the normalization section discusses lower case.
-    // Unclear status.
+    // Uppercase preferred.
     @Test public void parse_06() { goodNoIRICheck("/ab%ffdef"); }
 
     @Test public void parse_07() { good("http://host/abcdef?qs=foo#frag"); }

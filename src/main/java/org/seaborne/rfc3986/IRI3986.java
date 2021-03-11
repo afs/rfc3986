@@ -352,10 +352,20 @@ public class IRI3986 {
      * Return 'this' if there are no violations.
      */
     public IRI3986 schemeSpecificRules() {
-        // No internal objects created.
         if ( ! hasScheme() )
             // no scheme, no checks.
             return this;
+        // General RFC 3986 warnings.
+        // * userinfo
+
+//        // Error in http? Check.
+//        if ( hasUserInfo() ) // getAuthority().contains("@") )
+//           warning("URI", "userinfo (e.g. user:password) in authority section");
+
+        // * empty port.
+//      if ( hasPort() && (port0 == port1) ) //getPort().isEmpty()
+//      warning("http", "port is empty");
+
         // Avoid any object creation and also be case insensitive.
         if ( isScheme(HTTPchars) || isScheme(HTTPSchars) )
             checkHTTPx();
@@ -534,21 +544,24 @@ public class IRI3986 {
      */
     public IRI3986 relativize(IRI3986 iri) {
         // "this" is the base.
+        return relativize(this, iri);
+    }
+    private static IRI3986 relativize(IRI3986 base, IRI3986 iri) {
         Objects.requireNonNull(iri);
-        if ( ! this.hasScheme() || this.hasQuery() )
+        if ( ! base.hasScheme() || base.hasQuery() )
             return null;
         if ( ! iri.hasScheme() && !iri.hasAuthority() )
             return null;
-        if ( ! Objects.equals(iri.getScheme(), this.getScheme()) )
+        if ( ! Objects.equals(iri.getScheme(), base.getScheme()) )
             return null;
-        if ( ! Objects.equals(iri.getAuthority(), this.getAuthority()) )
+        if ( ! Objects.equals(iri.getAuthority(), base.getAuthority()) )
             return null;
 //        if ( ! Objects.equals(base.getHost(), this.getHost()) )
 //            return null;
 //        if ( ! Objects.equals(base.getPort(), this.getPort()) )
 //            return null;
 
-        String basePath = this.getPath();
+        String basePath = base.getPath();
         String targetPath = iri.getPath();
 
         if ( basePath.equals(targetPath) &&
@@ -920,7 +933,7 @@ public class IRI3986 {
     private static Pattern URN_PATTERN_ASSIGNED_NAME_STRICT = Pattern.compile("^urn:[a-zA-Z0-9][-a-zA-Z0-9]{0,30}[a-zA-Z0-9]:.+");
 
     // More generous.
-    // NID, can be one char and can be "X"-" (RFC 2141)
+    // NID, can be one char and can be "X-" (RFC 2141)
     // NSS, and it's colon can be absent. base names can be <urn:nid:> but not <urn:nid>
     private static Pattern URN_PATTERN_ASSIGNED_NAME_LOOSE = Pattern.compile("^urn:[a-zA-Z0-9][-a-zA-Z0-9]{0,31}:(.*)");
 
@@ -968,6 +981,10 @@ public class IRI3986 {
          *   reject it as invalid.
          */
         // See https://tools.ietf.org/html/rfc7230#section-2.7.1
+
+        if ( HTTPx_SCHEME == NOT_STRICT )
+            return;
+
         if ( hasHost() && (host0 == host1) ) //getHost().isEmpty()
             schemeError("http", "http and https URI schemes do not allow the host to be empty");
 

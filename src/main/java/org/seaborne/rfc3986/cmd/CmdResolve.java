@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package cmd.iri;
+package org.seaborne.rfc3986.cmd;
 
 import org.seaborne.rfc3986.IRI3986;
 import org.seaborne.rfc3986.IRIParseException;
