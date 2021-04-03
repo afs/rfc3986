@@ -25,7 +25,7 @@ import org.junit.Test;
 /**
  * Test parsed components.
  * <p>
- * Detailed testing IPv6 parsing is in {@link TestAddressIPv6}.
+ * Detailed testing IPv6 parsing is in {@link TestParseIPv6Address}.
  */
 public class TestParseComponents {
     @Test public void components_http_01() {

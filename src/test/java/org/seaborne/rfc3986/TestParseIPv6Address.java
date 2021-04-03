@@ -22,7 +22,7 @@ import static org.junit.Assert.fail;
 
 import org.junit.Test;
 
-public class TestAddressIPv6 {
+public class TestParseIPv6Address {
     @Test public void addr_ipv6_01() { good6("[0001:0002:0003:0004:0005:0006:0007:0008]"); }
     @Test public void addr_ipv6_02() { good6("[123:5678::ABCD:89EF]"); }
     @Test public void addr_ipv6_03() { good6("[123:5678::ABCD]"); }
@@ -86,7 +86,5 @@ public class TestAddressIPv6 {
             ParseIPv6Address.checkIPv6(string);
             fail("Expected a parse exception: '"+string+"'");
         } catch (IRIParseException ex) {}
-
     }
-
 }

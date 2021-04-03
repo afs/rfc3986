@@ -25,7 +25,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-/** Detailed testing IPv6 parsing is in {@link TestAddressIPv6} */
+/** Detailed testing IPv6 parsing is in {@link TestParseIPv6Address} */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TestRFC3986 {
     // Assumes full authority parsing and not scheme-specific checks.
@@ -73,6 +73,12 @@ public class TestRFC3986 {
     @Test public void parse_17() { good("/a:b/"); }
 
     @Test public void parse_18() { good("/z/a:b"); }
+
+    // Characters / and ? in trailer
+    @Test public void parse_19() { good("http://host/ab?query=abc?def"); }
+    @Test public void parse_20() { good("http://host/ab#abc?def"); }
+    @Test public void parse_21() { good("http://host/path?q=abc/def#abc/def"); }
+    @Test public void parse_22() { good("http://host/path?q=abc/def#abc?def"); }
 
     // HTTP scheme specific rules.
     @Test public void parse_http_01()   { badSpecific("http:///file/name.txt"); }

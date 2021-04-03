@@ -29,9 +29,10 @@ import org.junit.runners.Suite;
     TestResolve.class,
     TestNormalize.class,
     TestRelative.class,
-    TestAddressIPv6.class,
-    TestBuild.class
-
+    TestBuild.class,
+    TestParseIPv6Address.class,
+    TestParseDNS.class,
+    TestParseDID.class
 } )
 
 public class TS_RFC3986 { }

@@ -18,6 +18,8 @@
 
 package org.seaborne.rfc3986;
 
+import static org.seaborne.rfc3986.SystemIRI3986.parseError;
+
 /** Operations related to parsing IRIs */
 /*package*/ class ParseLib {
 
@@ -116,4 +118,22 @@ package org.seaborne.rfc3986;
         buff.append(hexDigitsUC[n3]);
         buff.append(hexDigitsUC[n4]);
     }
+
+    static boolean isPctEncoded(char ch, String str, int x) {
+        if ( ch != '%' )
+            return false;
+        char ch1 = str.charAt(x+1);
+        char ch2 = str.charAt(x+2);
+        return percentCheck(x, ch1, ch2);
+    }
+
+    static boolean percentCheck(int idx, char ch1, char ch2) {
+        if ( ch1 == EOF || ch2 == EOF )
+            parseError(idx+1, "Incomplete %-encoded character");
+        if ( isHexDigit(ch1) && isHexDigit(ch2) )
+            return true;
+        parseError(idx+1, "Bad %-encoded character ["+displayChar(ch1)+" "+displayChar(ch2)+"]");
+        return false;
+    }
+
 }

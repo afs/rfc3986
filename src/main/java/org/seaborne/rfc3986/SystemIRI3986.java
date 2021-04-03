@@ -60,7 +60,7 @@ public class SystemIRI3986 {
     }
 
     // Default!
-    private static ErrorHandler errorHandler = s -> { throw new IRIParseException(s);};
+    private static ErrorHandler errorHandler = s -> { throw new IRIParseException(s); };
 
     static void parseError(int posn, String s) {
         if ( posn >= 0 )

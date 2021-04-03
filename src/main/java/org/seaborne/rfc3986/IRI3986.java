@@ -309,6 +309,19 @@ public class IRI3986 {
     public boolean isRelative() {
         // No scheme.
         // This is not "! isAbsolute()"
+
+        //        relative-part = "//" authority path-abempty
+        //                / path-absolute
+        //                / path-noscheme
+        //                / path-empty
+        // whereas:
+        //        hier-part     = "//" authority path-abempty
+        //                / path-absolute
+        //                / path-rootless
+        //                / path-empty
+        //
+        // Difference between "path-noscheme" and "path-rootless" is that "path-noscheme" does nto allow a colon in the first segment.
+        // But we parsed it via the URI rule.
         return ! hasScheme();
     }
 
@@ -336,14 +349,15 @@ public class IRI3986 {
         return hasPath() && charAt(path0) != '/';
     }
 
-    // Scheme names, include ':' as the terminator.
+    // Scheme names, include ':' as the terminator, in lower case.
     private static char[] HTTPchars     = "http:".toCharArray();
     private static char[] HTTPSchars    = "https:".toCharArray();
     private static char[] URNchars      = "urn:".toCharArray();
     private static char[] URN_UUIDchars = "urn:uuid:".toCharArray();
+    private static char[] DIDchars      = "did:".toCharArray();
+    private static char[] FILEchars     = "file:".toCharArray();
     // It's not officially registered but may be found in the wild.
     private static char[] UUIDchars     = "uuid:".toCharArray();
-    private static char[] FILEchars     = "file:".toCharArray();
 
     private boolean isScheme(char[] schemeChars) { return containsAtIgnoreCase(iriStr, 0, schemeChars); }
 
@@ -377,6 +391,8 @@ public class IRI3986 {
             checkURN();
         else if ( isScheme(UUIDchars) )
             checkUUID(UUIDchars);
+        else if ( isScheme(DIDchars) )
+            checkDID();
         return this;
     }
 
@@ -502,7 +518,7 @@ public class IRI3986 {
         StringBuilder sb = new StringBuilder(len);
         for ( int i = 0 ; i < len ; i++ ) {
             char ch = str.charAt(i);
-            if ( ! isPctEncoded(str, i) ) {
+            if ( ! ParseLib.isPctEncoded(ch, str, i) ) {
                 sb.append(ch);
                 continue;
             }
@@ -804,7 +820,7 @@ public class IRI3986 {
         return s;
     }
 
-//    // >> Copied from jena-iri to use for comparison.
+//    // >> Copied from jena-iri for comparison.
 //    static String jenaIRIremoveDotSegments(String path) {
 //        // 5.2.4 step 1.
 //        int inputBufferStart = 0;
@@ -1036,6 +1052,17 @@ public class IRI3986 {
             schemeError(String.valueOf(scheme), "Not a valid UUID string: "+uuidStr);
     }
 
+    /**
+     * @see ParseDID
+     */
+    private void checkDID() {
+        try {
+        ParseDID.parse(iriStr, true);
+        } catch (RuntimeException ex) {
+            schemeError("did", "Invalid DID: "+ex.getMessage());
+        }
+    }
+
     // ---- Scheme
 
     //scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
@@ -1180,6 +1207,9 @@ public class IRI3986 {
                 lastColon = -1;
             } else if ( ! isIPChar(ch, p) ) {
                 // All the characters in an (i)authority section, regardless of correct use.
+                // While percent-encoded is possible, the extra logic to avoid parsing
+                // the hex digits again is not worth it especially aas they are very
+                // likely cache hits.
                 break;
             }
             p++;
@@ -1229,10 +1259,6 @@ public class IRI3986 {
                 parseError(-1, "Bad port");
         } else
             host1 = limit;
-//        String u = part(input, endUserInfo==-1?-1:start, endUserInfo);
-//        String h = part(input, host0, host1);
-//        String ps = part(input, port0, port1);
-//        System.out.printf("Authority: |%s|%s|%s|\n", u,h,ps);
 
         // XXX Check DNS name.
         // IPv4 address or DNS name between host0 and host1.
@@ -1293,26 +1319,58 @@ public class IRI3986 {
         while (p < length ) {
             // skip segment-nz    = 1*pchar
             char ch = charAt(p);
-            if ( isIPChar(ch, p) ) {
-                if ( ! allowColon && ch == ':' )
+
+            int charLen = isIPCharLen(ch, p);
+            if ( charLen == 1 ) {
+                if ( ! allowColon && ch == ':' ) {
                     // segment-nz-nc
                     parseError(p+1, "':' in initial segment of a scheme-less IRI");
-            } else {
-                // End segment.
-                allowColon = true;
-                segStart = p+1;
-                // Maybe new one.
-                if ( ch != '/') {
-                    if ( ch == ' ' )
-                        parseError(p+1, "Space found in IRI");
-                    // ? or # else error
-                    if ( ch == '?' || ch == '#' )
-                        break;
-                    // Not IPChar
-                    parseError(p+1, format("bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
                 }
+                p++;
+                continue;
             }
+            if ( charLen == 3 ) {
+                // percent-encoded.
+                p += 3;
+                continue;
+            }
+
+            // End segment.
+            // Maybe new one.
+            if ( ch != '/') {
+                if ( ch == ' ' )
+                    parseError(p+1, "Space found in IRI");
+                // ? or # else error
+                if ( ch == '?' || ch == '#' )
+                    break;
+                // Not IPChar
+                parseError(p+1, format("bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
+            }
+            allowColon = true;
+            segStart = p+1;
             p++;
+
+          // Version for "isIPChar"
+//            if ( isIPChar(ch, p) ) {
+//                if ( ! allowColon && ch == ':' )
+//                    // segment-nz-nc
+//                    parseError(p+1, "':' in initial segment of a scheme-less IRI");
+//            } else {
+//                // End segment.
+//                allowColon = true;
+//                segStart = p+1;
+//                // Maybe new one.
+//                if ( ch != '/') {
+//                    if ( ch == ' ' )
+//                        parseError(p+1, "Space found in IRI");
+//                    // ? or # else error
+//                    if ( ch == '?' || ch == '#' )
+//                        break;
+//                    // Not IPChar
+//                    parseError(p+1, format("bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
+//                }
+//            }
+//            p++;
         }
 
         if ( p > start ) {
@@ -1359,18 +1417,51 @@ public class IRI3986 {
         int p = start+1;
         while(p < length ) {
             char ch = charAt(p);
-            //System.out.println("    char="+ch);
-            if ( ! isIPChar(ch, p) && ch != '/' && ch != '?' ) {
-                // 3986 -> 3987 extra test
-                if ( ! allowPrivate )
-                    // p is the index of the non-query/fragment char
-                    return p;
-                // query string allows iPrivate
-                if ( ! isIPrivate(ch) )
-                    return p;
+            int charLen = isIPCharLen(ch, p);
+            if ( charLen == 1 || charLen == 3 ) {
+                p += charLen;
+                continue;
             }
-            // Character OK for trailer.
-            p++;
+            // Trailer extra characters.
+            if ( ch == '/' || ch == '?' ) {
+                p++;
+                continue;
+            }
+
+            if ( allowPrivate && isIPrivate(ch) ) {
+              p++;
+              continue;
+          }
+          // Not trailer.
+          return p;
+
+//          //-- Newish rewrite Using isIPChar
+//          if ( isIPChar(ch, p) || ch == '/' || ch == '?' ) {
+//              p++;
+//              continue;
+//          }
+//
+//          // 3986 -> 3987 extra test
+//          if ( allowPrivate && isIPrivate(ch) ) {
+//              p++;
+//              continue;
+//          }
+//          // Not trailer.
+//          return p;
+
+          // ORIGINAL.
+//            if ( ! isIPChar(ch, p) && ch != '/' && ch != '?' ) {
+//                // 3986 -> 3987 extra test
+//                if ( ! allowPrivate )
+//                    // p is the index of the non-query/fragment char
+//                    return p;
+//                // query string allows iPrivate
+//                if ( ! isIPrivate(ch) )
+//                    return p;
+//            }
+//            // Character OK for trailer.
+
+//            p++;
         }
         return p; // = length if correct IRI.
     }
@@ -1388,30 +1479,14 @@ public class IRI3986 {
     private static final char EOF = ParseLib.EOF;
 
     // Is the character at location 'x' percent-encoded? Looks at next two characters if an only if ch is '%'
+    // This function looks ahead 2 characters which will be parsed but likely they are in the L1 or L2 cache
+    // and the alternative is more complex logic (return the new character position in some way).
     private boolean isPctEncoded(char ch, int x) {
         if ( ch != '%' )
             return false;
         char ch1 = charAt(x+1);
         char ch2 = charAt(x+2);
         return percentCheck(x, ch1, ch2);
-    }
-
-    private static boolean isPctEncoded(String str, int x) {
-        char ch = str.charAt(x);
-        if ( ch != '%' )
-            return false;
-        char ch1 = str.charAt(x+1);
-        char ch2 = str.charAt(x+2);
-        return percentCheck(x, ch1, ch2);
-    }
-
-    private static boolean percentCheck(int idx, char ch1, char ch2) {
-        if ( ch1 == EOF || ch2 == EOF )
-            parseError(idx+1, "Incomplete %-encoded character");
-        if ( isHexDigit(ch1) && isHexDigit(ch2) )
-            return true;
-        parseError(idx+1, "Bad %-encoded character ["+displayChar(ch1)+" "+displayChar(ch2)+"]");
-        return false;
     }
 
     private static boolean isAlpha(char ch) {
@@ -1443,7 +1518,6 @@ public class IRI3986 {
 //            || range(ch, 0x70000, 0x7FFFD) || range(ch, 0x80000, 0x8FFFD) || range(ch, 0x90000, 0x9FFFD)
 //            || range(ch, 0xA0000, 0xAFFFD) || range(ch, 0xB0000, 0xBFFFD) || range(ch, 0xC0000, 0xCFFFD)
 //            || range(ch, 0xD0000, 0xDFFFD) || range(ch, 0xE1000, 0xEFFFD)
-
     }
 
     // int version - includes support for beyond 16 bit chars.
@@ -1499,6 +1573,15 @@ public class IRI3986 {
         return unreserved(ch) || isPctEncoded(ch, posn) || subDelims(ch) || ch == ':' || ch == '@';
     }
 
+    /** isPChar, returning length matched, or -1 for not an PChar */
+    private int isPCharLen(char ch, int posn) {
+        if ( unreserved(ch) /*|| isPctEncoded(ch, posn)*/ || subDelims(ch) || ch == ':' || ch == '@' )
+            return 1;
+        if ( isPctEncoded(ch, posn) )
+            return 3;
+        return -1;
+    }
+
     /*package*/ static boolean unreserved(char ch) {
         if ( isAlpha(ch) || isDigit(ch) )
             return true;
@@ -1537,6 +1620,16 @@ public class IRI3986 {
     private boolean isIPChar(char ch, int posn) {
         return isPChar(ch, posn) || isUcsChar(ch);
     }
+
+    private int isIPCharLen(char ch, int posn) {
+        if ( unreserved(ch) /*|| isPctEncoded(ch, posn)*/ || subDelims(ch) || ch == ':' || ch == '@' || isUcsChar(ch) )
+            return 1;
+        if ( isPctEncoded(ch, posn) )
+            return 3;
+        return -1;
+    }
+
+
 
     @Override
     public int hashCode() {
