@@ -18,9 +18,7 @@
 
 package org.seaborne.rfc3986.cmd;
 
-import org.seaborne.rfc3986.IRI3986;
-import org.seaborne.rfc3986.IRIParseException;
-import org.seaborne.rfc3986.RFC3986;
+import org.seaborne.rfc3986.*;
 
 public class CmdIRI {
     public static void main(String... args) {
@@ -28,6 +26,19 @@ public class CmdIRI {
             System.err.println("No iri string");
             System.exit(1);
         }
+
+        // Default!
+        ErrorHandler errorHandler = new ErrorHandler() {
+            @Override
+            public void warning(String message) {
+                System.err.println("Scheme specific warning:");
+                System.err.println("    "+message);
+            }
+            @Override
+            public void error(String message) { throw new IRIParseException(message); }
+        };
+        SystemIRI3986.setErrorHandler(errorHandler);
+
         for (String iriStr : args ) {
             if ( iriStr.startsWith("<") && iriStr.endsWith(">") )
                 iriStr = iriStr.substring(1, iriStr.length()-1);

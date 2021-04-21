@@ -320,7 +320,7 @@ public class IRI3986 {
         //                / path-rootless
         //                / path-empty
         //
-        // Difference between "path-noscheme" and "path-rootless" is that "path-noscheme" does nto allow a colon in the first segment.
+        // Difference between "path-noscheme" and "path-rootless" is that "path-noscheme" does not allow a colon in the first segment.
         // But we parsed it via the URI rule.
         return ! hasScheme();
     }
@@ -381,8 +381,10 @@ public class IRI3986 {
 //      warning("http", "port is empty");
 
         // Avoid any object creation and also be case insensitive.
-        if ( isScheme(HTTPchars) || isScheme(HTTPSchars) )
-            checkHTTPx();
+        if ( isScheme(HTTPchars) )
+            checkHTTPx(true);
+        else if ( isScheme(HTTPSchars) )
+            checkHTTPx(false);
         else if ( isScheme(FILEchars) )
             checkFILE();
         else if ( isScheme(URN_UUIDchars) )
@@ -986,9 +988,15 @@ public class IRI3986 {
         }
     }
 
-    private void checkHTTPx() {
-        if ( ! hasAuthority() )
-            schemeError("http", "http and https URI schemes require //");
+    private void checkHTTPx(boolean isHTTP) {
+        String schemeName = isHTTP ? "http" : "https";
+
+        /*
+         * https://tools.ietf.org/html/rfc2616#section-3.2.2
+         *
+         *   http_URL = "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
+         */
+
         /*
          * https://tools.ietf.org/html/rfc7230#section-2.7.1
          *
@@ -998,17 +1006,17 @@ public class IRI3986 {
          */
         // See https://tools.ietf.org/html/rfc7230#section-2.7.1
 
-        if ( HTTPx_SCHEME == NOT_STRICT )
-            return;
+        if ( ! hasAuthority() )
+            schemeError(schemeName, "http and https URI schemes require //");
 
-        if ( hasHost() && (host0 == host1) ) //getHost().isEmpty()
-            schemeError("http", "http and https URI schemes do not allow the host to be empty");
+        if ( hasHost() && (host0 == host1) )
+            schemeMsg(schemeName, "http and https URI schemes do not allow the host to be empty");
 
-        /*
-         * https://tools.ietf.org/html/rfc2616#section-3.2.2
-         *
-         *   http_URL = "http:" "//" host [ ":" port ] [ abs_path [ "?" query ]]
-         *
+        // https://tools.ietf.org/html/rfc3986#section-3.2.3
+        if ( hasPort() && (port0 == port1) ) //getHost().isEmpty()
+            schemeWarning(schemeName, "Port is empty - omit the ':'");
+
+         /*
          * https://tools.ietf.org/html/rfc7230#section-2.7.1
          *
          *   A sender MUST NOT
@@ -1017,11 +1025,24 @@ public class IRI3986 {
          *   target or header field value.  Before making use of an "http" URI
          *   reference received from an untrusted source, a recipient SHOULD parse
          *   for userinfo and treat its presence as an error; it is likely being
-         *  used to obscure the authority for the sake of phishing attacks.
+         *   used to obscure the authority for the sake of phishing attacks.
+         *
+         * ----
+         *  And in linked data, any URI is a request target.
          */
 
-        if ( hasUserInfo() ) // getAuthority().contains("@") )
-            schemeError("http", "userinfo (e.g. user:password) in authority section");
+        if ( hasUserInfo() )
+            schemeMsg(schemeName, "userinfo (e.g. user:password) in authority section");
+
+        if ( hasPort() ) {
+            if ( isHTTP ) {
+                if ( getPort().equals("80") )
+                    schemeWarning(schemeName, "Default port 80 should be can be omitted");
+            } else {
+                if ( getPort().equals("443") )
+                    schemeWarning(schemeName, "Default port 443 should be can be omitted");
+            }
+        }
     }
 
     private void checkFILE() {
@@ -1057,13 +1078,21 @@ public class IRI3986 {
      */
     private void checkDID() {
         try {
-        ParseDID.parse(iriStr, true);
+            ParseDID.parse(iriStr, true);
         } catch (RuntimeException ex) {
             schemeError("did", "Invalid DID: "+ex.getMessage());
         }
     }
 
     // ---- Scheme
+
+    private void schemeMsg(String schemeName, String msg) {
+        if ( HTTPx_SCHEME == NOT_STRICT )
+            schemeWarning(schemeName, msg);
+        else
+            schemeError(schemeName, msg);
+
+    }
 
     //scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
     private int scheme(int start) {
@@ -1344,7 +1373,7 @@ public class IRI3986 {
                 if ( ch == '?' || ch == '#' )
                     break;
                 // Not IPChar
-                parseError(p+1, format("bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
+                parseError(p+1, format("Bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
             }
             allowColon = true;
             segStart = p+1;
@@ -1367,7 +1396,7 @@ public class IRI3986 {
 //                    if ( ch == '?' || ch == '#' )
 //                        break;
 //                    // Not IPChar
-//                    parseError(p+1, format("bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
+//                    parseError(p+1, format("Bad character in IRI path: "+ch+" (U+%04X)", (int)ch));
 //                }
 //            }
 //            p++;

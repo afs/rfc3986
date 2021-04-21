@@ -28,8 +28,8 @@ public class TestParseDNS {
     @Test public void parseDNS_02() { goodDNS("ab.cd.e"); }
     @Test public void parseDNS_03() { goodDNS("ab.cd.e."); }
     @Test public void parseDNS_04() { goodDNS("192.168.0.1"); }
-    @Test public void parseDNS_05() { goodDNS(""); }
-    @Test public void parseDNS_06() { goodDNS(" "); }
+    //@Test public void parseDNS_05() { goodDNS(""); }      // Unclear if RFC 1034 actually meant ""
+    //@Test public void parseDNS_06() { goodDNS(" "); }     // RFC 1034 does allow " " - it is the root address.
     // \u00E9 - e-acute
     @Test public void parseDNS_07() { goodDNS("\u00E9"); }
     @Test public void parseDNS_08() { goodDNS("%E9"); }
@@ -44,9 +44,9 @@ public class TestParseDNS {
     // \u00E9 - e-acute
 
     @Test public void parseDNS_bad_01() { badDNS("a.b..c.d"); }
-    @Test public void parseDNS_bad_02() { badDNS("."); }
+    @Test public void parseDNS_bad_02() { badDNS("."); }            // Must be at least one label.
     @Test public void parseDNS_bad_03() { badDNS(".abcd"); }
-    @Test public void parseDNS_bad_04() { badDNS("300.168.0.1"); }
+    //@Test public void parseDNS_bad_04() { badDNS("300.168.0.1"); }  // IPv4-like
     @Test public void parseDNS_bad_05() { badDNS("a.b.c:d"); }
     @Test public void parseDNS_bad_06() { badDNS("a.b.c:80"); }
     @Test public void parseDNS_bad_07() { badDNS("abc-"); }

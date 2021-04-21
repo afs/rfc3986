@@ -63,7 +63,7 @@ public class ParseDNS {
     /* RFCs 1034 and 1035, and as updated and clarified by RFCs 1123 and 2181.
      *
      *    https://tools.ietf.org/html/rfc1034#section-3.1
-     *     https://tools.ietf.org/html/rfc1034#section-3.5
+     *    https://tools.ietf.org/html/rfc1034#section-3.5
      *    Wildcards https://tools.ietf.org/html/rfc4592
      *    Punycode - https://tools.ietf.org/html/rfc3492
      *    IDNA: https://tools.ietf.org/html/rfc3490
@@ -132,9 +132,14 @@ public class ParseDNS {
         if ( length == 0 )
             error("Empty string");
 
-        if ( length == 1 && string.equals(" ") ) {
-            // " " is the root.
-        }
+        if ( length == 1 && string.equals(" ") )
+            // " " is the root but we don't allow it (not used as such in applications).
+            error("Empty string");
+
+        if ( length == 1 && string.equals(".") )
+            // Must have one or more labels.
+            error("No subdomains.");
+
 
         List<Integer> dots = new ArrayList<>(4);
 
