@@ -18,33 +18,8 @@
 
 package org.seaborne.rfc3986;
 
-import static org.seaborne.rfc3986.SystemIRI3986.parseError;
-
 /** Operations related to parsing IRIs */
 /*package*/ class ParseLib {
-
-    // Unicode - not a character
-    /*package*/ static final char EOF = 0xFFFF;
-
-    /** Test whether a character is in a character range (both ends inclusive) */
-    public static boolean range(int ch, int start, int finish) {
-        return ch >= start && ch <= finish;
-    }
-
-    /**
-     * <tt>HEXDIG =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"</tt>
-     * but also lower case (non-normalized form). See RFC 3986 sec 6.2.2.1
-     */
-    public static boolean isHexDigit(char ch) {
-        return range(ch, '0', '9' ) || range(ch, 'A', 'F' ) || range(ch, 'a', 'f' )  ;
-    }
-
-    public static int hexValue(char ch) {
-        if ( range(ch, '0', '9' ) ) return ch-'0';
-        if ( range(ch, 'A', 'F' ) ) return ch-'A'+10;
-        if ( range(ch, 'a', 'f' ) ) return ch-'a'+10;
-        return -1;
-    }
 
     private static int CASE_DIFF = 'a'-'A';     // 0x20. Only for ASCII.
     /*
@@ -64,7 +39,7 @@ import static org.seaborne.rfc3986.SystemIRI3986.parseError;
             if ( ch == chx )
                 continue;
             // URI scheme names are ASCII.
-            if ( range(ch, 'A', 'Z' ) && ( chx - ch == CASE_DIFF ) )
+            if ( Chars3986.range(ch, 'A', 'Z' ) && ( chx - ch == CASE_DIFF ) )
                 continue;
             return false;
         }
@@ -83,13 +58,8 @@ import static org.seaborne.rfc3986.SystemIRI3986.parseError;
 
     public static char charAt(CharSequence string, int x) {
         if ( x >= string.length() )
-            return EOF;
+            return Chars3986.EOF;
         return string.charAt(x);
-    }
-
-    /** Return a display string for a character suitable for error messages. */
-    public static String displayChar(char ch) {
-        return String.format("%c (0x%04X)", ch, (int)ch);
     }
 
     // Copied from jena-base to make this package dependency-free.
@@ -118,22 +88,4 @@ import static org.seaborne.rfc3986.SystemIRI3986.parseError;
         buff.append(hexDigitsUC[n3]);
         buff.append(hexDigitsUC[n4]);
     }
-
-    static boolean isPctEncoded(char ch, String str, int x) {
-        if ( ch != '%' )
-            return false;
-        char ch1 = str.charAt(x+1);
-        char ch2 = str.charAt(x+2);
-        return percentCheck(x, ch1, ch2);
-    }
-
-    static boolean percentCheck(int idx, char ch1, char ch2) {
-        if ( ch1 == EOF || ch2 == EOF )
-            parseError(idx+1, "Incomplete %-encoded character");
-        if ( isHexDigit(ch1) && isHexDigit(ch2) )
-            return true;
-        parseError(idx+1, "Bad %-encoded character ["+displayChar(ch1)+" "+displayChar(ch2)+"]");
-        return false;
-    }
-
 }

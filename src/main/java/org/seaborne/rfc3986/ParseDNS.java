@@ -18,8 +18,6 @@
 
 package org.seaborne.rfc3986;
 
-import static org.seaborne.rfc3986.ParseLib.range;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -96,7 +94,7 @@ public class ParseDNS {
     private final String string;
     private final int length;
     // XXX Migrate to ParseLib.
-    private static char EOF = ParseLib.EOF;
+    private static char EOF = Chars3986.EOF;
     private static char HYPHEN = '-';
 
     private ParseDNS(String string) {
@@ -220,7 +218,7 @@ public class ParseDNS {
     }
 
     private boolean i_letter(char ch, int x) {
-        return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || isUcsChar(ch) || ParseLib.isPctEncoded(ch, string, x);
+        return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || isUcsChar(ch) || Chars3986.isPctEncoded(ch, string, x);
     }
 
     // DRY: IRI3986
@@ -236,7 +234,7 @@ public class ParseDNS {
     // We assume the java string is valid and surrogates are correctly in high-low pairs.
 
     private static boolean isUcsChar(char ch) {
-        return range(ch, 0xA0, 0xD7FF)  || range(ch, 0xF900, 0xFDCF)  || range(ch, 0xFDF0, 0xFFEF)
+        return Chars3986.range(ch, 0xA0, 0xD7FF)  || Chars3986.range(ch, 0xF900, 0xFDCF)  || Chars3986.range(ch, 0xFDF0, 0xFFEF)
                 // Allow surrogates.
                 || Character.isSurrogate(ch);
             // Java is 16 bits chars.

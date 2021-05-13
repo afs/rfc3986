@@ -18,10 +18,7 @@
 
 package org.seaborne.rfc3986;
 
-import static org.seaborne.rfc3986.ParseLib.charAt;
-import static org.seaborne.rfc3986.ParseLib.isHexDigit;
-import static org.seaborne.rfc3986.ParseLib.peekFor;
-import static org.seaborne.rfc3986.ParseLib.range;
+import static org.seaborne.rfc3986.Chars3986.charAt;
 
 /**
 <pre>
@@ -96,7 +93,7 @@ public class ParseIPv6Address {
         if ( p >= end )
             throw new IRIParseException("Short IPFuture");
         char ch = string.charAt(p);
-        if ( ! isHexDigit(ch) )
+        if ( ! Chars3986.isHexDigit(ch) )
             throw new IRIParseException("IPFuture: no version hexdigit");
         p++;
         ch = string.charAt(p);
@@ -108,7 +105,7 @@ public class ParseIPv6Address {
             ch = string.charAt(p);
             if ( ch == ']' )
                 break;
-            if ( ! IRI3986.unreserved(ch) && !IRI3986.subDelims(ch) && ch != ':' )
+            if ( ! Chars3986.unreserved(ch) && !Chars3986.subDelims(ch) && ch != ':' )
                 break;
             p++;
         }
@@ -128,7 +125,7 @@ public class ParseIPv6Address {
         int h16c = 0;
 
         //starting ::
-        boolean b = peekFor(string, p, ':',  ':');
+        boolean b = ParseLib.peekFor(string, p, ':',  ':');
         if ( b ) {
             h16c1 = h16c;
             h16c = 0 ;
@@ -169,7 +166,7 @@ public class ParseIPv6Address {
                 // End.
                 break;
             char ch = charAt(string, z);
-            if ( range(ch, 'a', 'f') || range(ch, 'A', 'F') )
+            if ( Chars3986.range(ch, 'a', 'f') || Chars3986.range(ch, 'A', 'F') )
                 break;
             if ( ch == '.' ) {
                 IPv4 = true;
@@ -252,7 +249,7 @@ public class ParseIPv6Address {
             if ( p+i >= end )
                 return p+i;
             char ch = charAt(string, p+i);
-            if ( ! isHexDigit(ch) )
+            if ( ! Chars3986.isHexDigit(ch) )
                 return p+i;
         }
         return p+4;

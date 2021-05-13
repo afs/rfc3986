@@ -18,8 +18,8 @@
 
 package org.seaborne.rfc3986;
 
-import static org.seaborne.rfc3986.ParseLib.charAt;
-import static org.seaborne.rfc3986.ParseLib.range;
+import static org.seaborne.rfc3986.Chars3986.charAt;
+
 
 /**
 <pre>
@@ -87,7 +87,7 @@ public class ParseIPv4Address {
             if ( p+i >= string.length() )
                 return p+i;
             char ch = charAt(string, p+i);
-            if ( ! range(ch, '0', '9') )
+            if ( ! Chars3986.range(ch, '0', '9') )
                 return p+i;
         }
         // 3 digits
@@ -131,7 +131,7 @@ public class ParseIPv4Address {
                 if ( countDot == 3 )
                     // Yes!
                     break;
-            } else if ( ! range(ch,'0', '9') )
+            } else if ( ! Chars3986.range(ch,'0', '9') )
                 break;
 
         }
@@ -147,7 +147,7 @@ public class ParseIPv4Address {
             if ( p < 0 )
                 break;
             char ch = charAt(string, p);
-            if ( ! range(ch,'0', '9') )
+            if ( ! Chars3986.range(ch,'0', '9') )
                 break;
         }
 

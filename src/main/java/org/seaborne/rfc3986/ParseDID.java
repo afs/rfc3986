@@ -20,7 +20,7 @@ package org.seaborne.rfc3986;
 
 public class ParseDID {
 
-    private static char EOF = ParseLib.EOF ;
+    private static char EOF = Chars3986.EOF ;
 
     /*
     ==== "did:" rules
@@ -123,7 +123,7 @@ public class ParseDID {
                (ch >= 'A' && ch <= 'Z') ||
                (ch >= '0' && ch <= '9') ||
                ch == '.' || ch == '-' || ch == '_' ||
-               ParseLib.isPctEncoded(ch, str, p);
+               Chars3986.isPctEncoded(ch, str, p);
     }
 
     static class DIDParseException extends IRIParseException {

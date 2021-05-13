@@ -20,6 +20,8 @@ package org.seaborne.rfc3986;
 
 import static org.junit.Assert.*;
 
+import java.util.Locale;
+
 import org.apache.jena.iri.IRI;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
@@ -116,9 +118,28 @@ public class TestRFC3986 {
 
     @Test public void parse_urn_05()        { good("urn:abc0:def"); }
 
-    @Test public void parse_ftp_01() { good("ftp://user@host:3333/abc/def?qs=ghi#jkl"); }
+    private static String testUUID = "0fa0c738-a789-11eb-b471-abdc7e01c508";
 
-    @Test public void parse_ftp_02() { good("ftp://[::1]/abc/def?qs=ghi#jkl"); }
+    @Test public void parse_uuid_01()   { good("uuid:"+testUUID); }
+
+    @Test public void parse_uuid_02()   { good("uuid:"+(testUUID.toUpperCase(Locale.ROOT))); }
+
+    @Test public void parse_uuid_03()   { goodNoIRICheck("UUID:"+testUUID); }
+
+    @Test public void parse_uuid_04()   { good("urn:uuid:"+testUUID); }
+
+    @Test public void parse_uuid_05()   { good("urn:uuid:"+(testUUID.toUpperCase(Locale.ROOT))); }
+
+    @Test public void parse_uuid_06()   { goodNoIRICheck("URN:UUID:"+testUUID); }
+
+    @Test public void parse_uuid_07()   { badSpecific("urn:uuid:0000"); }
+
+    @Test public void parse_uuid_08()   { badSpecific("uuid:0000-1111"); }
+
+
+    @Test public void parse_ftp_01()    { good("ftp://user@host:3333/abc/def?qs=ghi#jkl"); }
+
+    @Test public void parse_ftp_02()    { good("ftp://[::1]/abc/def?qs=ghi#jkl"); }
 
     // ---- bad
 
