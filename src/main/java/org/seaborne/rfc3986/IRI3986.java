@@ -201,9 +201,9 @@ public class IRI3986 {
         // Did the process consume the whole string?
         if ( x != length ) {
             String label;
-            if ( fragment0 != 0)
+            if ( fragment0 >= 0)
                 label = "fragment";
-            else if ( query0 != 0)
+            else if ( query0 >= 0)
                 label = "query";
             else
                 label = "path";
